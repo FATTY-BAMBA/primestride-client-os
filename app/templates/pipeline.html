@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Pipeline · PrimeStride Client OS{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div><div class="eyebrow">CLIENT INTELLIGENCE</div><h1>Pipeline</h1><p>每個客戶只有一份永久紀錄。會前 Intake → Discovery → Diagnosis → Data → Blueprint 全部沿用同一份 context。</p></div>
+  <form class="quick-add" method="post" action="/companies">
+    <input name="name" placeholder="公司名稱" required><input name="industry" placeholder="產業"><input name="owner" placeholder="Owner">
+    <button>+ 新增客戶</button>
+  </form>
+</section>
+<section class="board">
+{% for stage in stages %}
+  <div class="column">
+    <div class="column-head"><span>{{ stage }}</span><b>{{ buckets[stage]|length }}</b></div>
+    {% for c in buckets[stage] %}
+      <a class="card" href="/companies/{{ c.id }}">
+        <div class="card-title">{{ c.name }}</div>
+        <div class="muted">{{ c.industry or '未填產業' }}</div>
+        {% if c.next_action %}<div class="next"><span>Next</span>{{ c.next_action }}</div>{% endif %}
+        <div class="meta"><span>{{ c.owner or 'Unassigned' }}</span><span>{{ c.due_date or '' }}</span></div>
+      </a>
+    {% endfor %}
+  </div>
+{% endfor %}
+</section>
+{% endblock %}
