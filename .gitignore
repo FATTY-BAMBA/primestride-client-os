@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Build / runtime
+.vercel/
+dist/
+build/
+
+# Client data — never commit real customer files
+client-data/
+uploads/
