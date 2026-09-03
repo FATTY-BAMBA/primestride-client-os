@@ -8,9 +8,17 @@ from sqlalchemy.pool import NullPool
 DATABASE_URL = os.getenv("DATABASE_URL")
 IS_VERCEL = bool(os.getenv("VERCEL"))
 
-# Local development can use a normal SQLite file. Vercel previews use /tmp only
-# as a disposable demo fallback; production should always set DATABASE_URL to
-# persistent PostgreSQL.
+# Normalize standard Postgres URLs to the psycopg v3 SQLAlchemy driver. This lets
+# us paste Supabase connection strings into Vercel without rewriting credentials.
+if DATABASE_URL:
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+    elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+psycopg://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+
+# Local development can use SQLite. Vercel may temporarily use /tmp only as a
+# disposable preview fallback; real Preview/Production environments should set
+# DATABASE_URL to Supabase Postgres.
 if not DATABASE_URL:
     DATABASE_URL = (
         "sqlite:////tmp/primestride_client_os.db"
@@ -25,6 +33,13 @@ if is_sqlite:
     engine_kwargs.update(
         connect_args={"check_same_thread": False},
         poolclass=NullPool,
+    )
+elif IS_VERCEL:
+    # Supabase recommends transaction-mode Supavisor + SQLAlchemy NullPool for
+    # serverless/auto-scaling workloads. Supavisor owns the connection pooling.
+    engine_kwargs.update(
+        poolclass=NullPool,
+        pool_pre_ping=True,
     )
 else:
     engine_kwargs.update(
@@ -50,11 +65,10 @@ _schema_ready = False
 
 
 def ensure_schema() -> None:
-    """Create tables lazily once per runtime instance.
+    """Temporary v0.2 bootstrap: create missing tables lazily once per runtime.
 
-    This does not rely solely on ASGI startup hooks, which makes the app more
-    resilient in serverless runtimes where instances can be created/frozen at
-    different times.
+    This avoids relying solely on ASGI startup hooks. Before production use we
+    will replace schema creation with versioned Alembic migrations.
     """
     global _schema_ready
     if _schema_ready:
