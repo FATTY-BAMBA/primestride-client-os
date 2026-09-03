@@ -36,10 +36,12 @@ if is_sqlite:
     )
 elif IS_VERCEL:
     # Supabase recommends transaction-mode Supavisor + SQLAlchemy NullPool for
-    # serverless/auto-scaling workloads. Supavisor owns the connection pooling.
+    # serverless/auto-scaling workloads. Transaction mode does not support
+    # prepared statements, so psycopg automatic preparation is disabled.
     engine_kwargs.update(
         poolclass=NullPool,
         pool_pre_ping=True,
+        connect_args={"prepare_threshold": None},
     )
 else:
     engine_kwargs.update(
