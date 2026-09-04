@@ -1,4 +1,4 @@
-// Deterministic ingestion stays at v0.8.4; v0.9.2 adds section-aware multimodal reconstruction.
+// Deterministic ingestion stays at v0.8.4; v0.9.3 moves multimodal AI to background polling.
 (() => {
   const metric = document.querySelector('.intake-summary-grid .intake-metric:nth-child(3) strong');
   if (metric) metric.textContent = 'v0.8.4';
@@ -6,12 +6,13 @@
   if (eyebrow) eyebrow.textContent = 'INGESTION INTELLIGENCE · v0.8.4';
 })();
 
-import('/static/v081.js?v=092')
-  .then(() => import('/static/v083.js?v=092'))
-  .then(() => import('/static/v084.js?v=092'))
-  .then(() => import('/static/v09.js?v=092'))
-  .then(() => import('/static/v091.js?v=092'))
-  .then(() => import('/static/v092.js?v=092'))
+import('/static/v081.js?v=093')
+  .then(() => import('/static/v083.js?v=093'))
+  .then(() => import('/static/v084.js?v=093'))
+  .then(() => import('/static/v09.js?v=093'))
+  .then(() => import('/static/v091.js?v=093'))
+  .then(() => import('/static/v092.js?v=093'))
+  .then(() => import('/static/v093.js?v=093'))
   .catch((err) => {
     const box = document.getElementById('ingestion-error');
     if (box) {
