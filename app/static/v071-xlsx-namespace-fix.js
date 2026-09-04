@@ -24,4 +24,28 @@
 
   patch(Document.prototype);
   patch(Element.prototype);
+
+  // v0.7.2 compatibility fix: XLSX rows can contain intentionally blank columns.
+  // The lightweight parser represents those as sparse arrays. Native Array
+  // iteration yields `undefined` for a sparse slot, while the v0.7 readiness
+  // mapper expects every iterated column to be a profile object. On this page,
+  // make sparse-array iteration skip only missing slots. Dense arrays are
+  // unchanged. This keeps blank spreadsheet columns from crashing inspection.
+  if (!Array.prototype.__psSparseIteratorFix) {
+    const nativeIterator = Array.prototype[Symbol.iterator];
+    Object.defineProperty(Array.prototype, '__psSparseIteratorFix', { value: true });
+    Array.prototype[Symbol.iterator] = function* () {
+      let sparse = false;
+      for (let i = 0; i < this.length; i++) {
+        if (!(i in this)) { sparse = true; break; }
+      }
+      if (!sparse) {
+        yield* nativeIterator.call(this);
+        return;
+      }
+      for (let i = 0; i < this.length; i++) {
+        if (i in this) yield this[i];
+      }
+    };
+  }
 })();
