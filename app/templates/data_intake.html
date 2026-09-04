@@ -16,8 +16,8 @@
   <section class="intake-summary-grid">
     <div class="intake-metric"><span>FILES RECEIVED</span><strong>{{ files_received }}</strong><small>已收到／登記檔案</small></div>
     <div class="intake-metric"><span>DATASETS DETECTED</span><strong>{% if files_received %}{{ received_categories|length }}{% else %}0{% endif %}</strong><small>目前已辨識資料類別</small></div>
-    <div class="intake-metric"><span>MAPPED FIELDS</span><strong>0</strong><small>Field mapping starts after review</small></div>
-    <div class="intake-metric"><span>NEEDS REVIEW</span><strong>{{ files_received }}</strong><small>{% if files_received %}等待分類與欄位檢視{% else %}等待第一批資料{% endif %}</small></div>
+    <div class="intake-metric"><span>FIELD INSPECTION</span><strong>v0.7</strong><small>Local detection + mapping suggestions</small></div>
+    <div class="intake-metric"><span>NEEDS REVIEW</span><strong>{{ files_received }}</strong><small>{% if files_received %}等待／持續證據檢視{% else %}等待第一批資料{% endif %}</small></div>
   </section>
 
   {% if files_received == 0 %}
@@ -31,6 +31,71 @@
     </div>
   </section>
   {% endif %}
+
+  <section class="panel ingestion-lab" id="ingestion-lab" data-company-id="{{ company.id }}">
+    <div class="ingestion-lab-head">
+      <div>
+        <span class="eyebrow">INGESTION INTELLIGENCE · v0.7</span>
+        <h2>Inspect → Detect → Map → Confirm</h2>
+        <p>Open a real sample locally, detect structure and likely canonical mappings, then save only the metadata and readiness evidence you approve. This validates the ingestion workflow before we connect permanent object storage and Drive sync.</p>
+      </div>
+      <span class="privacy-pill">LOCAL-FIRST · FILE BYTES STAY IN THIS BROWSER</span>
+    </div>
+
+    <label class="ingestion-drop" id="ingestion-drop">
+      <input type="file" id="ingestion-file" accept=".csv,.tsv,.txt,.json,.xlsx">
+      <strong>Drop one sample file here, or click to inspect locally</strong>
+      <span>把一份真實樣本拖進來。先看資料，再決定要問客戶什麼。</span>
+      <div class="ingestion-support"><span>CSV</span><span>TSV</span><span>JSON</span><span>XLSX · first worksheet preview</span></div>
+    </label>
+    <div id="ingestion-error" class="ingestion-error"></div>
+
+    <div class="inspection-results" id="inspection-results">
+      <div class="inspection-summary">
+        <div class="inspection-stat"><span>ROWS</span><strong id="stat-rows">0</strong><small>records inspected</small></div>
+        <div class="inspection-stat"><span>FIELDS</span><strong id="stat-fields">0</strong><small>columns detected</small></div>
+        <div class="inspection-stat"><span>MAPPED</span><strong id="stat-mapped">0</strong><small>canonical suggestions</small></div>
+        <div class="inspection-stat"><span>QUALITY FLAGS</span><strong id="stat-quality">0</strong><small>structural issues</small></div>
+        <div class="inspection-stat"><span>FILE</span><strong id="stat-filetype">—</strong><small>hash <span id="stat-hash">—</span></small></div>
+      </div>
+
+      <div class="inspection-controls">
+        <label>INFERRED CATEGORY · 推測類別<select id="inspection-category">{% for key,en,zh in expected_categories %}<option value="{{ key }}">{{ en }} · {{ zh }}</option>{% endfor %}</select></label>
+        <label>SOURCE · 來源<input id="inspection-source" value="Local browser inspection"></label>
+        <label>FILE · 檔案<div style="margin-top:7px"><b id="inspection-filename">—</b><small id="inspection-meta" style="display:block;color:#7b888a;margin-top:3px">—</small></div></label>
+        <a class="btn secondary" href="/companies/{{ company.id }}/readiness-framework">Open Readiness →</a>
+      </div>
+      <div class="xlsx-note" id="xlsx-sheet-note"></div>
+
+      <div class="inspection-two-col">
+        <section class="inspection-box">
+          <div class="inspection-box-head"><b>Detected Fields & Canonical Mapping · 欄位偵測與映射</b><span>Header-based suggestion · human review required</span></div>
+          <div class="detected-table-wrap"><table class="detected-table"><thead><tr><th>SOURCE FIELD</th><th>CANONICAL TARGET</th><th>CONFIDENCE</th><th>MISSING</th><th>UNIQUE</th></tr></thead><tbody id="detected-fields-body"></tbody></table></div>
+        </section>
+
+        <div style="display:grid;gap:12px">
+          <section class="inspection-box">
+            <div class="inspection-box-head"><b>Quality Signals · 品質訊號</b><span>fast structural profile</span></div>
+            <div class="quality-list" id="quality-list"></div>
+          </section>
+          <section class="inspection-box">
+            <div class="inspection-box-head"><b>Suggested Readiness Evidence · 建議證據</b><span>uncheck anything you do not trust</span></div>
+            <div class="evidence-suggestion-list" id="evidence-suggestions"></div>
+          </section>
+        </div>
+      </div>
+
+      <section class="inspection-preview">
+        <div class="inspection-box-head"><b>Local Preview · 本機預覽</b><span>first 8 rows · maximum 14 displayed fields</span></div>
+        <div class="preview-table-wrap"><table class="preview-table" id="preview-table"></table></div>
+      </section>
+
+      <div class="inspection-savebar">
+        <div><p><b>Confirm before saving.</b> Client OS stores the filename, inspection summary, hash and only the readiness evidence you leave checked. The original file is not persisted by this preview.</p><small>Production ingestion will preserve original bytes in tenant-isolated object storage with source lineage; v0.7 is validating the detection and review workflow first.</small></div>
+        <div><button id="inspection-save" type="button">Register + Save Approved Evidence</button><span id="inspection-save-status" class="save-status"></span></div>
+      </div>
+    </div>
+  </section>
 
   <div class="intake-main-grid">
     <section class="panel intake-categories">
@@ -69,7 +134,7 @@
   <section class="panel intake-files-panel">
     <div class="panel-title">
       <div><span class="eyebrow">FILE INVENTORY</span><h2>Received Files · 已收資料</h2></div>
-      <span>Manual registry in v0.4 · connector ingestion next</span>
+      <span>v0.7 stores inspection metadata · object storage connector next</span>
     </div>
     {% if company.intake_files %}
     <div class="file-list">
@@ -111,3 +176,4 @@
   </section>
 </div>
 {% endblock %}
+{% block scripts %}<script src="/static/v07.js"></script>{% endblock %}
