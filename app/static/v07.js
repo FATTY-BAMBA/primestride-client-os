@@ -1,12 +1,12 @@
-// v0.8 loader: keep the existing template path stable while replacing the old parser.
+// v0.8.1 loader: messy-data hardening + safer contextual mappings.
 (() => {
   const metric = document.querySelector('.intake-summary-grid .intake-metric:nth-child(3) strong');
-  if (metric) metric.textContent = 'v0.8';
+  if (metric) metric.textContent = 'v0.8.1';
   const eyebrow = document.querySelector('.ingestion-lab .eyebrow');
-  if (eyebrow) eyebrow.textContent = 'INGESTION INTELLIGENCE · v0.8';
+  if (eyebrow) eyebrow.textContent = 'INGESTION INTELLIGENCE · v0.8.1';
 })();
 
-import('/static/v08.js?v=081').catch((err) => {
+import('/static/v081.js?v=081').catch((err) => {
   const box = document.getElementById('ingestion-error');
   if (box) {
     box.textContent = `Ingestion engine failed to load: ${err?.message || err}`;
