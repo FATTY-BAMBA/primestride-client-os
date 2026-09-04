@@ -30,18 +30,26 @@
 
 <section class="panel hero-panel">
   <div>
-    <div class="panel-title"><div><span class="eyebrow">CLIENT JOURNEY</span><h2>Client Workspace · 客戶工作台</h2></div><span>v0.4 workflow</span></div>
+    <div class="panel-title"><div><span class="eyebrow">CLIENT JOURNEY</span><h2>Client Workspace · 客戶工作台</h2></div><span>v0.5 workflow</span></div>
     <h3>{{ completion }}% Discovery Context Captured</h3>
     <div class="bar large"><i style="width:{{ completion }}%"></i></div>
-    <p class="subtle">Known context stays with the account. The next meeting should advance the client, not repeat what we already know.</p>
+    <p class="subtle">Known context stays with the account. Stage rules, evidence and decisions should tell us exactly what to do next.</p>
   </div>
   <div class="hero-actions">
-    <a class="btn primary" href="/companies/{{ company.id }}/data-intake">Data Intake · 資料匯入{% if files_received %} ({{ files_received }}){% endif %}</a>
-    <a class="btn secondary" href="#memory">Client Memory · 客戶記憶</a>
-    <a class="btn secondary" href="#playbook">Meeting Playbook · 會議作戰卡</a>
-    <a class="btn secondary" href="/companies/{{ company.id }}/discovery-meeting">Discovery Record</a>
-    {% if company.meetings %}<a class="btn secondary" href="/companies/{{ company.id }}/follow-up">Generate Follow-Up</a>{% endif %}
+    <a class="btn primary" href="/companies/{{ company.id }}/stage-intelligence">Stage Intelligence · 階段智慧</a>
+    <a class="btn secondary" href="/companies/{{ company.id }}/data-intake">Data Intake{% if files_received %} ({{ files_received }}){% endif %}</a>
+    <a class="btn secondary" href="/companies/{{ company.id }}/readiness-framework">Readiness</a>
+    <a class="btn secondary" href="/companies/{{ company.id }}/solution-blueprint">Solution Blueprint</a>
+    <a class="btn secondary" href="#memory">Client Memory</a>
+    <a class="btn secondary" href="#playbook">Meeting Playbook</a>
   </div>
+</section>
+
+<section class="stage-mini">
+  <div><span>CURRENT STAGE</span><b>{{ company.stage }}</b></div>
+  <div><span>WAITING FOR</span><b>{{ stage_info.waiting_for }}</b></div>
+  <div><span>NEXT STAGE</span><b>{{ stage_info.next_stage or '—' }}</b></div>
+  <a class="btn secondary" href="/companies/{{ company.id }}/stage-intelligence">Why / What next →</a>
 </section>
 
 <section class="panel memory-panel" id="memory">
@@ -230,7 +238,7 @@
     <label>FIT · 適配度<select name="fit_status"><option>{{ company.fit_status or 'Unknown' }}</option><option>Strong Fit</option><option>Potential Fit</option><option>Not Yet</option><option>No Fit</option></select></label>
     <button>Save · 儲存狀態</button>
   </form>
-  <p class="gate-note">DEFINITION OF DONE · Diagnosis Confirmed 之後需要 ≥75% Discovery、至少 1 個 High Fit，以及清楚的 Next Action。</p>
+  <p class="gate-note">STAGE ENGINE · Use Stage Intelligence to see why the account is here and what evidence is required before advancing.</p>
 </section>
 
 <section class="panel" id="discovery">
@@ -240,8 +248,17 @@
 </section>
 
 <section class="panel" id="readiness">
-  <div class="panel-title"><div><span class="eyebrow">DATA READINESS</span><h2>資料健檢</h2></div><a href="/companies/{{ company.id }}/data-intake">Open Data Intake →</a></div>
-  <div class="readiness-grid">{% for r in company.readiness %}<div class="ready-card"><div class="ready-top"><b>MODULE {{ r.module_no }}</b><span>{{ r.score|round|int }}%</span></div><h3>{{ r.module_no }} · {{ r.module_name }}</h3><div class="bar"><i style="width:{{ r.score }}%"></i></div><p>{{ r.status or '' }}</p></div>{% endfor %}{% if not company.readiness %}<div class="empty">DATA READINESS · Awaiting evidence. No readiness percentage will be invented before files are reviewed.</div>{% endif %}</div>
+  <div class="panel-title"><div><span class="eyebrow">DATA READINESS</span><h2>Evidence Readiness · 資料健檢</h2></div><a href="/companies/{{ company.id }}/readiness-framework">Open Framework →</a></div>
+  <div class="readiness-grid">
+    {% for r in readiness_summaries %}
+    <div class="ready-card">
+      <div class="ready-top"><b>MODULE {{ r.module_no }}</b><span>{% if r.score is none %}—{% else %}{{ r.score|round|int }}%{% endif %}</span></div>
+      <h3>{{ r.name }}</h3>
+      <div class="bar"><i style="width:{{ r.review_progress }}%"></i></div>
+      <p>{% if r.score is none %}Awaiting evidence{% else %}{{ r.score_label }} · {{ r.review_progress|round|int }}% evidence reviewed{% endif %}</p>
+    </div>
+    {% endfor %}
+  </div>
 </section>
 
 <section class="panel" id="tasks">
@@ -255,6 +272,11 @@
   <div class="module-row"><span>Client Contact · 客戶窗口</span><b>{{ contact.name }}</b></div>
   <div class="module-row"><span>PrimeStride Owner · 我方負責人</span><b>{{ company.owner or '—' }}</b></div>
   <div class="module-row"><span>Decision Maker · 客戶決策者</span><b>Unknown · 待確認</b></div>
+  <div class="divider"></div>
+  <div class="panel-title"><div><span class="eyebrow">PROJECT CONTROL</span><h2>專案控制</h2></div></div>
+  <div class="module-row"><span>Files registered</span><b>{{ files_received }}</b></div>
+  <div class="module-row"><span>Decision records</span><b>{{ decision_count }}</b></div>
+  <div class="module-row"><span>Next stage</span><b>{{ stage_info.next_stage or '—' }}</b></div>
   <div class="divider"></div>
   <div class="panel-title"><div><span class="eyebrow">MODULE FIT</span><h2>模組適配度</h2></div></div>
   {% for no,name in modules.items() %}{% set match = company.module_fits|selectattr('module_no','equalto',no)|list %}<div class="module-row"><span>{{ no }} · {{ name }}</span>{% if match %}<b class="fit {{ match[0].fit|lower }}">{{ match[0].fit }}</b>{% else %}<b class="fit low">—</b>{% endif %}</div>{% endfor %}
