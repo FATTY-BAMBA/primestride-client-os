@@ -1,73 +1,165 @@
 {% extends "base.html" %}
-{% block title %}Client Pipeline · PrimeStride Client OS{% endblock %}
+{% block title %}客戶管線 · PrimeStride Client OS{% endblock %}
 {% block content %}
 {% set active_count = buckets['New Lead']|length + buckets['Meeting Booked']|length + buckets['Discovery']|length + buckets['Diagnosis Confirmed']|length + buckets['Solution Fit']|length + buckets['Data Requested']|length + buckets['Data Received']|length + buckets['Data Readiness']|length + buckets['Client Blueprint']|length + buckets['Proposal']|length %}
 {% set discovery_count = buckets['Meeting Booked']|length + buckets['Discovery']|length + buckets['Diagnosis Confirmed']|length + buckets['Solution Fit']|length %}
-{% set data_count = buckets['Data Requested']|length + buckets['Data Received']|length + buckets['Data Readiness']|length %}
-{% set proposal_count = buckets['Client Blueprint']|length + buckets['Proposal']|length %}
+{% set data_count = buckets['Data Requested']|length + buckets['Data Received']|length + buckets['Data Readiness']|length + buckets['Client Blueprint']|length %}
+{% set proposal_count = buckets['Proposal']|length %}
 {% set won_count = buckets['Won']|length + buckets['Implementation']|length + buckets['Go Live']|length + buckets['Optimization']|length %}
+{% set stage_labels = {
+  'New Lead':'新名單', 'Meeting Booked':'已約會', 'Discovery':'探索中', 'Diagnosis Confirmed':'診斷完成',
+  'Solution Fit':'方案匹配', 'Data Requested':'已請資料', 'Data Received':'已收資料', 'Data Readiness':'資料健檢',
+  'Client Blueprint':'客戶藍圖', 'Proposal':'已提案', 'Won':'已成交', 'Nurture':'持續培養', 'Lost':'未成交',
+  'Implementation':'導入中', 'Go Live':'已上線', 'Optimization':'優化中'
+} %}
 
-<div class="workspace-shell">
-  <section class="page-head modern-head">
+<div class="workspace-shell pipeline-workspace">
+  <section class="page-head modern-head pipeline-head">
     <div>
       <div class="eyebrow">CLIENT INTELLIGENCE</div>
-      <h1>Client Pipeline</h1>
-      <p>每個客戶只保留一份永久紀錄。從第一次接觸到導入，所有 context 持續累積，不重複問。</p>
+      <h1>客戶管線</h1>
+      <p>每個客戶只保留一份永久紀錄。從第一次接觸、探索、資料健檢到導入，所有資訊持續累積，不重複問。</p>
     </div>
     <details class="new-company">
-      <summary class="btn primary">＋ New company</summary>
+      <summary class="btn primary">＋ 新增客戶</summary>
       <form class="new-company-form" method="post" action="/companies">
-        <label>Company<input name="name" placeholder="公司名稱" required></label>
-        <label>Industry<input name="industry" placeholder="產業"></label>
-        <label>Owner<input name="owner" placeholder="Owner"></label>
-        <button>Create company</button>
+        <label>公司名稱<input name="name" placeholder="公司名稱" required></label>
+        <label>產業<input name="industry" placeholder="例如：印刷、機械加工"></label>
+        <label>負責人<input name="owner" placeholder="Owner"></label>
+        <button>建立客戶</button>
       </form>
     </details>
   </section>
 
-  <section class="metric-grid">
-    <div class="metric"><span>Active accounts</span><strong>{{ active_count }}</strong><small>Open opportunities</small></div>
-    <div class="metric"><span>Discovery</span><strong>{{ discovery_count }}</strong><small>Meeting → fit</small></div>
-    <div class="metric"><span>Data stage</span><strong>{{ data_count }}</strong><small>Request → readiness</small></div>
-    <div class="metric"><span>Blueprint / Proposal</span><strong>{{ proposal_count }}</strong><small>Decision stage</small></div>
-    <div class="metric"><span>Won / Delivery</span><strong>{{ won_count }}</strong><small>Customer lifecycle</small></div>
+  <section class="metric-grid metric-grid-strong">
+    <div class="metric"><span>進行中</span><strong>{{ active_count }}</strong><small>目前開啟的商機</small></div>
+    <div class="metric"><span>探索與診斷</span><strong>{{ discovery_count }}</strong><small>會議 → 問題確認</small></div>
+    <div class="metric"><span>資料與藍圖</span><strong>{{ data_count }}</strong><small>資料請求 → Client Blueprint</small></div>
+    <div class="metric"><span>提案決策</span><strong>{{ proposal_count }}</strong><small>等待客戶決策</small></div>
+    <div class="metric"><span>成交與交付</span><strong>{{ won_count }}</strong><small>Won → Go Live</small></div>
   </section>
 
-  <section class="stage-strip">
-    {% for stage, items in buckets.items() %}
-      <div class="stage-token {% if items|length %}has-items{% endif %}"><span>{{ stage }}</span><b>{{ items|length }}</b></div>
-    {% endfor %}
-  </section>
-
-  <section class="accounts-panel">
-    <div class="section-head">
-      <div><h2>Accounts</h2><p>Focus on the next action, owner and deadline — not just the pipeline label.</p></div>
+  <section class="pipeline-flow" aria-label="PrimeStride sales pipeline">
+    <div class="pipeline-step {% if buckets['New Lead']|length + buckets['Meeting Booked']|length %}is-active{% endif %}">
+      <span class="pipeline-index">01</span><div><b>新機會</b><small>名單與初次會議</small></div><strong>{{ buckets['New Lead']|length + buckets['Meeting Booked']|length }}</strong>
     </div>
-    <div class="table-wrap">
-      <table class="accounts-table">
-        <thead>
-          <tr><th>Company</th><th>Stage</th><th>Owner</th><th>Next action</th><th>Due</th></tr>
-        </thead>
-        <tbody>
-          {% set ns = namespace(total=0) %}
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step {% if discovery_count %}is-active{% endif %}">
+      <span class="pipeline-index">02</span><div><b>探索診斷</b><small>痛點、流程、適配度</small></div><strong>{{ discovery_count }}</strong>
+    </div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step {% if data_count %}is-active{% endif %}">
+      <span class="pipeline-index">03</span><div><b>資料與藍圖</b><small>資料健檢與方案設計</small></div><strong>{{ data_count }}</strong>
+    </div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step {% if proposal_count %}is-active{% endif %}">
+      <span class="pipeline-index">04</span><div><b>提案決策</b><small>投資、範圍、下一步</small></div><strong>{{ proposal_count }}</strong>
+    </div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-step {% if won_count %}is-active{% endif %}">
+      <span class="pipeline-index">05</span><div><b>交付成長</b><small>導入、上線、優化</small></div><strong>{{ won_count }}</strong>
+    </div>
+  </section>
+
+  <section class="pipeline-main-grid">
+    <div class="accounts-panel accounts-panel-main">
+      <div class="section-head section-head-strong">
+        <div><h2>客戶帳戶</h2><p>公司、下一步與截止日期應該比「在哪個階段」更容易被看到。</p></div>
+        <div class="table-legend"><span class="legend-dot overdue"></span>逾期 <span class="legend-dot missing"></span>缺少下一步／Owner</div>
+      </div>
+      <div class="table-wrap">
+        <table class="accounts-table accounts-table-strong">
+          <thead>
+            <tr><th>客戶</th><th>階段</th><th>負責人</th><th>下一步</th><th>到期</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% set ns = namespace(total=0) %}
+            {% for stage, items in buckets.items() %}
+              {% for c in items %}
+                {% set ns.total = ns.total + 1 %}
+                <tr class="account-row {% if not c.next_action or not c.owner %}row-missing{% endif %}" data-due="{{ c.due_date or '' }}" onclick="window.location='/companies/{{ c.id }}'">
+                  <td><div class="account-name">{{ c.name }}</div><div class="account-industry">{{ c.industry or '未填產業' }}</div></td>
+                  <td><span class="stage-badge">{{ stage_labels.get(c.stage, c.stage) }}</span></td>
+                  <td class="owner-cell">{{ c.owner or '未指定' }}</td>
+                  <td class="next-cell"><strong>{{ c.next_action or '尚未設定下一步' }}</strong></td>
+                  <td class="due-cell"><span class="due-date">{{ c.due_date or '—' }}</span><small class="due-state"></small></td>
+                  <td class="row-chevron">›</td>
+                </tr>
+              {% endfor %}
+            {% endfor %}
+            {% if ns.total == 0 %}
+              <tr class="empty-row"><td colspan="6">目前沒有客戶。建立第一家公司後，所有探索與資料會沿用同一份紀錄。</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="pipeline-side-stack">
+      <section class="attention-panel">
+        <div class="attention-head"><div><span class="attention-kicker">ATTENTION</span><h2>需要注意</h2></div><strong id="attention-count">0</strong></div>
+        <div id="attention-list" class="attention-list">
           {% for stage, items in buckets.items() %}
             {% for c in items %}
-              {% set ns.total = ns.total + 1 %}
-              <tr onclick="window.location='/companies/{{ c.id }}'">
-                <td><div class="account-name">{{ c.name }}</div><div class="account-industry">{{ c.industry or '未填產業' }}</div></td>
-                <td><span class="stage-badge">{{ c.stage }}</span></td>
-                <td>{{ c.owner or 'Unassigned' }}</td>
-                <td class="next-cell">{{ c.next_action or '—' }}</td>
-                <td>{{ c.due_date or '—' }}</td>
-              </tr>
+              {% if not c.next_action %}
+                <a class="attention-item" href="/companies/{{ c.id }}"><span class="attention-mark amber"></span><div><b>{{ c.name }}</b><small>尚未設定下一步</small></div><span>›</span></a>
+              {% endif %}
+              {% if not c.owner %}
+                <a class="attention-item" href="/companies/{{ c.id }}"><span class="attention-mark amber"></span><div><b>{{ c.name }}</b><small>尚未指定負責人</small></div><span>›</span></a>
+              {% endif %}
+              {% if c.due_date %}
+                <a class="attention-item js-due-attention" data-due="{{ c.due_date }}" hidden href="/companies/{{ c.id }}"><span class="attention-mark red"></span><div><b>{{ c.name }}</b><small>下一步已逾期 · {{ c.due_date }}</small></div><span>›</span></a>
+              {% endif %}
             {% endfor %}
           {% endfor %}
-          {% if ns.total == 0 %}
-            <tr class="empty-row"><td colspan="5">No accounts yet. Create the first company to begin.</td></tr>
-          {% endif %}
-        </tbody>
-      </table>
-    </div>
+          <div class="attention-empty" id="attention-empty">目前沒有需要處理的異常。</div>
+        </div>
+      </section>
+
+      <section class="focus-panel">
+        <div class="attention-head"><div><span class="attention-kicker">NEXT ACTIONS</span><h2>下一步焦點</h2></div></div>
+        <div class="focus-list">
+          {% set focus = namespace(n=0) %}
+          {% for stage, items in buckets.items() %}
+            {% for c in items %}
+              {% if c.next_action and focus.n < 5 %}
+                {% set focus.n = focus.n + 1 %}
+                <a class="focus-item" href="/companies/{{ c.id }}"><div><b>{{ c.name }}</b><p>{{ c.next_action }}</p></div><small>{{ c.due_date or '未設定日期' }}</small></a>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+          {% if focus.n == 0 %}<div class="attention-empty">目前沒有下一步紀錄。</div>{% endif %}
+        </div>
+      </section>
+    </aside>
   </section>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  document.querySelectorAll('.account-row[data-due]').forEach(row => {
+    const raw = row.dataset.due;
+    if(!raw) return;
+    const due = new Date(raw + 'T00:00:00');
+    if(due < today){
+      row.classList.add('row-overdue');
+      const state = row.querySelector('.due-state');
+      if(state) state.textContent = '逾期';
+      const date = row.querySelector('.due-date');
+      if(date) date.classList.add('is-overdue');
+    }
+  });
+  document.querySelectorAll('.js-due-attention').forEach(item => {
+    const due = new Date(item.dataset.due + 'T00:00:00');
+    if(due < today) item.hidden = false;
+  });
+  const visible = [...document.querySelectorAll('.attention-item')].filter(el => !el.hidden);
+  const count = document.getElementById('attention-count');
+  const empty = document.getElementById('attention-empty');
+  if(count) count.textContent = visible.length;
+  if(empty) empty.hidden = visible.length > 0;
+})();
+</script>
 {% endblock %}
