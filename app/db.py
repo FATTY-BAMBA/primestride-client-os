@@ -97,10 +97,12 @@ def _install_primestride_bootstrap_hook() -> None:
             original_init(self, *args, **kwargs)
             from .v082_runtime import install_v082
             from .v082_perf import install_v082_perf
+            from .v091_ai import install_v091_ai
             from .v09_ai import install_v09_ai
 
             install_v082(self)
             install_v082_perf(self)
+            install_v091_ai(self)
             install_v09_ai(self)
 
         FastAPI.__init__ = wrapped_init
