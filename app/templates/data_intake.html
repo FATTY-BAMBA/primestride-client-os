@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Data Intake · {{ company.name }} · PrimeStride Client OS{% endblock %}
+{% block content %}
+<section class="company-head intake-head">
+  <a class="back" href="/companies/{{ company.id }}">← Client Workspace · 客戶工作台</a>
+  <div class="eyebrow">DATA INTAKE · 資料匯入</div>
+  <h1>{{ company.name }}</h1>
+  <div class="head-tags">
+    <span class="stage-pill">{{ company.stage }}</span>
+    <span>{{ files_received }} files registered</span>
+    <span>Next milestone: Data Readiness Assessment</span>
+  </div>
+</section>
+
+<div class="intake-shell">
+  <section class="intake-summary-grid">
+    <div class="intake-metric"><span>FILES RECEIVED</span><strong>{{ files_received }}</strong><small>已收到／登記檔案</small></div>
+    <div class="intake-metric"><span>DATASETS DETECTED</span><strong>{% if files_received %}{{ received_categories|length }}{% else %}0{% endif %}</strong><small>目前已辨識資料類別</small></div>
+    <div class="intake-metric"><span>MAPPED FIELDS</span><strong>0</strong><small>Field mapping starts after review</small></div>
+    <div class="intake-metric"><span>NEEDS REVIEW</span><strong>{{ files_received }}</strong><small>{% if files_received %}等待分類與欄位檢視{% else %}等待第一批資料{% endif %}</small></div>
+  </section>
+
+  {% if files_received == 0 %}
+  <section class="intake-waiting">
+    <div class="waiting-icon">↓</div>
+    <div>
+      <span class="eyebrow">CURRENT STATE</span>
+      <h2>Waiting for the client's first sample upload.</h2>
+      <p>Do not send another broad data request. The Phase 0 checklist has already been sent. Once the first files arrive, PrimeStride reviews what is actually available before asking for anything else.</p>
+      <small>目前不需要再追一份完整資料清單。先看客戶實際上傳的第一批資料，再只補最小缺口。</small>
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="intake-main-grid">
+    <section class="panel intake-categories">
+      <div class="panel-title">
+        <div><span class="eyebrow">EXPECTED DATA</span><h2>Expected Categories · 預期資料類別</h2></div>
+        <span>{{ received_categories|length }}/{{ expected_categories|length }} categories</span>
+      </div>
+      <div class="category-list">
+        {% for key,en,zh in expected_categories %}
+        <div class="category-row {% if key in received_categories %}is-received{% endif %}">
+          <span class="category-status">{% if key in received_categories %}✓{% else %}○{% endif %}</span>
+          <div><b>{{ en }}</b><small>{{ zh }}</small></div>
+          <span>{% if key in received_categories %}Received{% else %}Waiting{% endif %}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="intake-rule">
+        <b>PrimeStride rule</b>
+        <p>Missing category ≠ project blocked. We decide whether a gap matters only after reviewing the actual files.</p>
+      </div>
+    </section>
+
+    <aside class="panel intake-next">
+      <div class="panel-title"><div><span class="eyebrow">NEXT MILESTONE</span><h2>Data Readiness</h2></div></div>
+      <ol class="next-sequence">
+        <li class="{% if files_received == 0 %}current{% endif %}"><span>01</span><div><b>Receive samples</b><small>客戶上傳現有資料</small></div></li>
+        <li class="{% if files_received > 0 %}current{% endif %}"><span>02</span><div><b>Classify files</b><small>辨識每份資料的用途</small></div></li>
+        <li><span>03</span><div><b>Detect fields</b><small>找出可用欄位與關係</small></div></li>
+        <li><span>04</span><div><b>Map canonical model</b><small>映射到 PrimeStride 標準模型</small></div></li>
+        <li><span>05</span><div><b>Assess readiness</b><small>只根據證據計算準備度</small></div></li>
+        <li><span>06</span><div><b>Ask only for gaps</b><small>只補真正會擋住下一步的資料</small></div></li>
+      </ol>
+    </aside>
+  </div>
+
+  <section class="panel intake-files-panel">
+    <div class="panel-title">
+      <div><span class="eyebrow">FILE INVENTORY</span><h2>Received Files · 已收資料</h2></div>
+      <span>Manual registry in v0.4 · connector ingestion next</span>
+    </div>
+    {% if company.intake_files %}
+    <div class="file-list">
+      {% for f in company.intake_files %}
+      <div class="file-row">
+        <div class="file-icon">▤</div>
+        <div class="file-main"><b>{{ f.filename }}</b><small>{{ f.category }} · {{ f.source }} · {{ f.received_at.strftime('%Y-%m-%d %H:%M') }}</small>{% if f.notes %}<p>{{ f.notes }}</p>{% endif %}</div>
+        <span class="file-status">{{ f.status }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="file-empty">
+      <b>No files registered yet.</b>
+      <p>When the client uploads data, this becomes the permanent file inventory and starting point for classification, field detection and source lineage.</p>
+    </div>
+    {% endif %}
+
+    <details class="manual-register">
+      <summary>＋ Register a received file manually · 手動登記已收到檔案</summary>
+      <form method="post" action="/companies/{{ company.id }}/data-intake/register" class="grid-form intake-register-form">
+        <label class="wide">FILE NAME · 檔名<input name="filename" placeholder="例如：2025報價紀錄.xlsx" required></label>
+        <label>CATEGORY · 類別<select name="category">{% for key,en,zh in expected_categories %}<option value="{{ key }}">{{ en }} · {{ zh }}</option>{% endfor %}</select></label>
+        <label>SOURCE · 來源<select name="source"><option>Google Drive</option><option>Email</option><option>Manual</option><option>Client Portal</option></select></label>
+        <label class="wide">NOTES · 備註<input name="notes" placeholder="Optional context"></label>
+        <button>Register File · 登記檔案</button>
+      </form>
+    </details>
+  </section>
+
+  <section class="panel intake-memory-snapshot">
+    <div class="panel-title"><div><span class="eyebrow">CLIENT MEMORY</span><h2>What we already know · 已知脈絡</h2></div><a href="/companies/{{ company.id }}#memory">Open full memory →</a></div>
+    <div class="memory-mini-grid">
+      <div><span>KNOWN</span>{% for item in memory.known[:4] %}<p>✓ {{ item.title }}</p>{% endfor %}</div>
+      <div><span>UNKNOWN</span>{% for item in memory.unknown[:4] %}<p>? {{ item.title }}</p>{% endfor %}</div>
+      <div><span>DO NOT ASK AGAIN</span>{% for item in memory.do_not_ask[:3] %}<p>× {{ item.title }}</p>{% endfor %}</div>
+      <div><span>NEXT BEST QUESTION</span>{% for item in memory.next_question[:2] %}<p>→ {{ item.title }}</p>{% endfor %}</div>
+    </div>
+  </section>
+</div>
+{% endblock %}
