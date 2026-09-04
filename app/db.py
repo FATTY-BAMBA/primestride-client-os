@@ -97,11 +97,14 @@ def _install_primestride_bootstrap_hook() -> None:
             original_init(self, *args, **kwargs)
             from .v082_runtime import install_v082
             from .v082_perf import install_v082_perf
+            from .v092_ai import install_v092_ai
             from .v091_ai import install_v091_ai
             from .v09_ai import install_v09_ai
 
             install_v082(self)
             install_v082_perf(self)
+            # Newest AI route first; Starlette resolves the first matching route.
+            install_v092_ai(self)
             install_v091_ai(self)
             install_v09_ai(self)
 
