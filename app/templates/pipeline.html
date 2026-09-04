@@ -26,7 +26,7 @@
       <form class="new-company-form" method="post" action="/companies">
         <label>COMPANY · 公司名稱<input name="name" placeholder="公司名稱" required></label>
         <label>INDUSTRY · 產業<input name="industry" placeholder="例如：印刷、機械加工"></label>
-        <label>OWNER · 負責人<input name="owner" placeholder="Owner"></label>
+        <label>PRIMESTRIDE OWNER · 我方負責人<input name="owner" placeholder="PrimeStride project owner"></label>
         <button>Create · 建立客戶</button>
       </form>
     </details>
@@ -65,22 +65,29 @@
   <section class="pipeline-main-grid">
     <div class="accounts-panel accounts-panel-main">
       <div class="section-head section-head-strong">
-        <div><div class="eyebrow">ACCOUNTS</div><h2>客戶帳戶</h2><p>Company、Next Action 與 Due Date 應該比單純的 pipeline stage 更容易被看到。</p></div>
-        <div class="table-legend"><span class="legend-dot overdue"></span>逾期 Overdue <span class="legend-dot missing"></span>缺少 Next Action / Owner</div>
+        <div><div class="eyebrow">ACCOUNTS</div><h2>客戶帳戶</h2><p>Company、Client Contact、PrimeStride Owner、Next Action 與 Due Date 一眼看清楚。</p></div>
+        <div class="table-legend"><span class="legend-dot overdue"></span>逾期 Overdue <span class="legend-dot missing"></span>缺少 Next Action / PrimeStride Owner</div>
       </div>
       <div class="table-wrap">
         <table class="accounts-table accounts-table-strong">
           <thead>
-            <tr><th>COMPANY<br>客戶</th><th>STAGE<br>階段</th><th>OWNER<br>負責人</th><th>NEXT ACTION<br>下一步</th><th>DUE<br>到期</th><th></th></tr>
+            <tr><th>COMPANY<br>客戶</th><th>STAGE<br>階段</th><th>CLIENT CONTACT<br>客戶窗口</th><th>PRIMESTRIDE OWNER<br>我方負責人</th><th>NEXT ACTION<br>下一步</th><th>DUE<br>到期</th><th></th></tr>
           </thead>
           <tbody>
             {% set ns = namespace(total=0) %}
             {% for stage, items in buckets.items() %}
               {% for c in items %}
                 {% set ns.total = ns.total + 1 %}
+                {% set contact = namespace(name='—') %}
+                {% for e in c.timeline %}
+                  {% if e.details and 'Primary contact:' in e.details %}
+                    {% set contact.name = e.details|replace('Primary contact:', '')|trim %}
+                  {% endif %}
+                {% endfor %}
                 <tr class="account-row {% if not c.next_action or not c.owner %}row-missing{% endif %}" data-due="{{ c.due_date or '' }}" onclick="window.location='/companies/{{ c.id }}'">
                   <td><div class="account-name">{{ c.name }}</div><div class="account-industry">{{ c.industry or '未填產業' }}</div></td>
                   <td><span class="stage-badge">{{ stage_labels.get(c.stage, c.stage) }}</span></td>
+                  <td>{{ contact.name }}</td>
                   <td class="owner-cell">{{ c.owner or '未指定' }}</td>
                   <td class="next-cell"><strong>{{ c.next_action or '尚未設定下一步' }}</strong></td>
                   <td class="due-cell"><span class="due-date">{{ c.due_date or '—' }}</span><small class="due-state"></small></td>
@@ -89,7 +96,7 @@
               {% endfor %}
             {% endfor %}
             {% if ns.total == 0 %}
-              <tr class="empty-row"><td colspan="6">No accounts yet · 目前沒有客戶。建立第一家公司後，所有探索與資料會沿用同一份紀錄。</td></tr>
+              <tr class="empty-row"><td colspan="7">No accounts yet · 目前沒有客戶。建立第一家公司後，所有探索與資料會沿用同一份紀錄。</td></tr>
             {% endif %}
           </tbody>
         </table>
@@ -106,7 +113,7 @@
                 <a class="attention-item" href="/companies/{{ c.id }}"><span class="attention-mark amber"></span><div><b>{{ c.name }}</b><small>Missing Next Action · 尚未設定下一步</small></div><span>›</span></a>
               {% endif %}
               {% if not c.owner %}
-                <a class="attention-item" href="/companies/{{ c.id }}"><span class="attention-mark amber"></span><div><b>{{ c.name }}</b><small>Missing Owner · 尚未指定負責人</small></div><span>›</span></a>
+                <a class="attention-item" href="/companies/{{ c.id }}"><span class="attention-mark amber"></span><div><b>{{ c.name }}</b><small>Missing PrimeStride Owner · 尚未指定我方負責人</small></div><span>›</span></a>
               {% endif %}
               {% if c.due_date %}
                 <a class="attention-item js-due-attention" data-due="{{ c.due_date }}" hidden href="/companies/{{ c.id }}"><span class="attention-mark red"></span><div><b>{{ c.name }}</b><small>Overdue · 下一步已逾期 · {{ c.due_date }}</small></div><span>›</span></a>
