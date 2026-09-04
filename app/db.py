@@ -85,7 +85,7 @@ def get_db():
 # v0.8.2 temporary bootstrap hook.
 # main.py currently creates the FastAPI instance directly rather than including
 # routers. Patch the shared FastAPI class before `app = FastAPI(...)` executes so
-# the v0.8.2 correction/performance router can be installed first. This hook is
+# the v0.8.2 correction/performance routes can be installed first. This hook is
 # intentionally isolated and should be removed when main.py is split into
 # explicit routers (planned for the next architecture cleanup).
 def _install_v082_bootstrap_hook() -> None:
@@ -99,8 +99,10 @@ def _install_v082_bootstrap_hook() -> None:
         def wrapped_init(self, *args, **kwargs):
             original_init(self, *args, **kwargs)
             from .v082_runtime import install_v082
+            from .v082_perf import install_v082_perf
 
             install_v082(self)
+            install_v082_perf(self)
 
         FastAPI.__init__ = wrapped_init
         FastAPI._primestride_v082_bootstrap = True
