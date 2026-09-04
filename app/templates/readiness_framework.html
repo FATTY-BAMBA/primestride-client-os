@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Readiness Framework · {{ company.name }} · PrimeStride Client OS{% endblock %}
+{% block content %}
+<section class="company-head v05-head">
+  <a class="back" href="/companies/{{ company.id }}">← Client Workspace · 客戶工作台</a>
+  <div class="eyebrow">READINESS FRAMEWORK · 資料準備度</div>
+  <h1>{{ company.name }}</h1>
+  <div class="head-tags">
+    <span class="stage-pill">{{ company.stage }}</span>
+    <span>{{ files_received }} files registered</span>
+    <span>Evidence-based only</span>
+  </div>
+</section>
+
+<div class="v05-page">
+  <section class="readiness-principle">
+    <div><span class="eyebrow">PRINCIPLE</span><h2>No invented readiness scores.</h2><p>A module receives a score only after evidence has actually been reviewed. Until then it stays <b>Awaiting evidence</b>.</p><small>準備度只根據實際證據計算；資料尚未檢視前，不顯示看起來很漂亮但沒有依據的百分比。</small></div>
+    <a class="btn secondary" href="/companies/{{ company.id }}/data-intake">Open Data Intake · 資料匯入</a>
+  </section>
+
+  <div class="readiness-module-stack">
+    {% for summary in summaries %}
+    <section class="panel readiness-module-card">
+      <div class="readiness-module-head">
+        <div>
+          <span class="eyebrow">MODULE {{ '%02d'|format(summary.module_no) }}</span>
+          <h2>{{ summary.name }}</h2>
+          <small>{{ summary.name_zh }}</small>
+        </div>
+        <div class="readiness-score-box">
+          {% if summary.score is none %}
+            <strong>—</strong><span>Awaiting evidence</span>
+          {% else %}
+            <strong>{{ summary.score|round|int }}%</strong><span>{{ summary.score_label }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="evidence-progress">
+        <div><span>Evidence reviewed</span><b>{{ summary.review_progress|round|int }}%</b></div>
+        <div class="bar"><i style="width:{{ summary.review_progress }}%"></i></div>
+        <small>{% if summary.final %}All required criteria reviewed · 可產生最終準備度{% elif summary.review_progress > 0 %}Provisional only · 尚有證據待確認{% else %}No criterion has been reviewed yet · 尚未開始證據檢視{% endif %}</small>
+      </div>
+
+      <div class="criteria-table-wrap">
+        <table class="criteria-table">
+          <thead><tr><th>CRITERION<br>條件</th><th>WEIGHT</th><th>STATUS</th><th>EVIDENCE / NOTES</th><th></th></tr></thead>
+          <tbody>
+          {% for criterion in summary.criteria %}
+            <tr class="criterion-row status-{{ criterion.status }}">
+              <td><b>{{ criterion.label }}</b><small>{{ criterion.zh }}</small></td>
+              <td>{{ criterion.weight }}%</td>
+              <td><span class="evidence-status status-{{ criterion.status }}">{{ criterion.status_label }}</span></td>
+              <td>{% if criterion.source %}<b>{{ criterion.source }}</b>{% endif %}{% if criterion.notes %}<small>{{ criterion.notes }}</small>{% endif %}{% if not criterion.source and not criterion.notes %}<span class="muted">No evidence recorded</span>{% endif %}</td>
+              <td>
+                <details class="criterion-edit">
+                  <summary>Review</summary>
+                  <form method="post" action="/companies/{{ company.id }}/readiness-evidence">
+                    <input type="hidden" name="module_no" value="{{ summary.module_no }}">
+                    <input type="hidden" name="criterion_key" value="{{ criterion.key }}">
+                    <label>STATUS<select name="status">
+                      {% for value,label in status_options %}<option value="{{ value }}" {% if value==criterion.status %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select></label>
+                    <label>SOURCE<input name="source" value="{{ criterion.source or '' }}" placeholder="Filename / meeting / report"></label>
+                    <label>NOTES<textarea name="notes" placeholder="Why this status?">{{ criterion.notes or '' }}</textarea></label>
+                    <button>Save evidence</button>
+                  </form>
+                </details>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+
+  <section class="panel readiness-logic-card">
+    <div class="panel-title"><div><span class="eyebrow">SCORING LOGIC</span><h2>How the number is calculated · 分數怎麼算</h2></div></div>
+    <div class="logic-grid">
+      <div><b>Available</b><span>100% of criterion weight</span></div>
+      <div><b>Partial</b><span>50% of criterion weight</span></div>
+      <div><b>Missing</b><span>0% of criterion weight</span></div>
+      <div><b>Not required</b><span>Excluded from denominator</span></div>
+      <div><b>Awaiting</b><span>Not yet scored</span></div>
+    </div>
+    <p>While review is incomplete, the displayed number is explicitly marked <b>Provisional</b> and is calculated only from reviewed required criteria. A final score appears only after all required criteria have been reviewed.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title"><div><span class="eyebrow">NEXT</span><h2>Turn evidence into a blueprint · 下一步</h2></div></div>
+    <div class="v05-link-grid">
+      <a href="/companies/{{ company.id }}/stage-intelligence"><b>Stage Intelligence</b><small>See what must happen next</small></a>
+      <a href="/companies/{{ company.id }}/solution-blueprint"><b>Solution Blueprint</b><small>Use confirmed evidence, keep unknowns as TBD</small></a>
+    </div>
+  </section>
+</div>
+{% endblock %}
