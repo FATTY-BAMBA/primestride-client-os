@@ -30,16 +30,66 @@
 
 <section class="panel hero-panel">
   <div>
-    <div class="panel-title"><div><span class="eyebrow">CLIENT JOURNEY</span><h2>Client Workspace · 客戶工作台</h2></div><span>v0.3 workflow</span></div>
+    <div class="panel-title"><div><span class="eyebrow">CLIENT JOURNEY</span><h2>Client Workspace · 客戶工作台</h2></div><span>v0.4 workflow</span></div>
     <h3>{{ completion }}% Discovery Context Captured</h3>
     <div class="bar large"><i style="width:{{ completion }}%"></i></div>
-    <p class="subtle">Known context stays with the account. The next meeting should advance the client, not repeat the generic pitch.</p>
+    <p class="subtle">Known context stays with the account. The next meeting should advance the client, not repeat what we already know.</p>
   </div>
   <div class="hero-actions">
-    <a class="btn primary" href="#playbook">Meeting Playbook · 會議作戰卡</a>
+    <a class="btn primary" href="/companies/{{ company.id }}/data-intake">Data Intake · 資料匯入{% if files_received %} ({{ files_received }}){% endif %}</a>
+    <a class="btn secondary" href="#memory">Client Memory · 客戶記憶</a>
+    <a class="btn secondary" href="#playbook">Meeting Playbook · 會議作戰卡</a>
     <a class="btn secondary" href="/companies/{{ company.id }}/discovery-meeting">Discovery Record</a>
     {% if company.meetings %}<a class="btn secondary" href="/companies/{{ company.id }}/follow-up">Generate Follow-Up</a>{% endif %}
   </div>
+</section>
+
+<section class="panel memory-panel" id="memory">
+  <div class="panel-title">
+    <div><span class="eyebrow">CLIENT MEMORY</span><h2>Never Ask Twice · 客戶永久脈絡</h2></div>
+    <span>Known → Unknown → Do Not Ask → Next Best Question</span>
+  </div>
+  <div class="memory-grid">
+    <div class="memory-column memory-known">
+      <div class="memory-column-head"><span>KNOWN</span><b>What we already know · 已知</b></div>
+      <div class="memory-items">
+        {% for item in memory.known %}<div class="memory-item"><b>✓ {{ item.title }}</b>{% if item.details %}<small>{{ item.details }}</small>{% endif %}{% if item.source %}<small>Source: {{ item.source }}</small>{% endif %}</div>{% endfor %}
+        {% if not memory.known %}<div class="memory-empty">No confirmed facts yet.</div>{% endif %}
+      </div>
+    </div>
+    <div class="memory-column memory-unknown">
+      <div class="memory-column-head"><span>UNKNOWN</span><b>What is still unclear · 待確認</b></div>
+      <div class="memory-items">
+        {% for item in memory.unknown %}<div class="memory-item"><b>? {{ item.title }}</b>{% if item.details %}<small>{{ item.details }}</small>{% endif %}</div>{% endfor %}
+        {% if not memory.unknown %}<div class="memory-empty">No open unknowns.</div>{% endif %}
+      </div>
+    </div>
+    <div class="memory-column memory-noask">
+      <div class="memory-column-head"><span>DO NOT ASK AGAIN</span><b>Already answered · 不要再問</b></div>
+      <div class="memory-items">
+        {% for item in memory.do_not_ask %}<div class="memory-item"><b>× {{ item.title }}</b>{% if item.details %}<small>{{ item.details }}</small>{% endif %}</div>{% endfor %}
+        {% if not memory.do_not_ask %}<div class="memory-empty">Nothing blocked from re-asking yet.</div>{% endif %}
+      </div>
+    </div>
+    <div class="memory-column memory-next">
+      <div class="memory-column-head"><span>NEXT BEST QUESTION</span><b>Ask only what moves us forward · 下一個最好問題</b></div>
+      <div class="memory-items">
+        {% for item in memory.next_question %}<div class="memory-item"><b>→ {{ item.title }}</b>{% if item.details %}<small>{{ item.details }}</small>{% endif %}</div>{% endfor %}
+        {% if not memory.next_question %}<div class="memory-empty">No next question yet.</div>{% endif %}
+      </div>
+    </div>
+  </div>
+  <details class="memory-add">
+    <summary>＋ Add a memory item · 新增客戶脈絡</summary>
+    <form class="grid-form memory-add-form" method="post" action="/companies/{{ company.id }}/memory">
+      <label>TYPE · 類型<select name="kind"><option value="known">Known · 已知</option><option value="unknown">Unknown · 待確認</option><option value="do_not_ask">Do Not Ask Again · 不要再問</option><option value="next_question">Next Best Question · 下一個問題</option></select></label>
+      <label>CONFIDENCE · 信心<select name="confidence"><option>High</option><option>Medium</option><option>Low</option></select></label>
+      <label class="wide">MEMORY · 脈絡<input name="title" placeholder="One clear fact, unknown, or question" required></label>
+      <label class="wide">DETAILS · 說明<textarea name="details" placeholder="Optional supporting context"></textarea></label>
+      <label>SOURCE · 來源<input name="source" placeholder="Meeting / Email / Data / Manual"></label>
+      <button>Save Memory · 儲存</button>
+    </form>
+  </details>
 </section>
 
 <section class="panel playbook-panel" id="playbook">
@@ -190,8 +240,8 @@
 </section>
 
 <section class="panel" id="readiness">
-  <div class="panel-title"><div><span class="eyebrow">DATA READINESS</span><h2>資料健檢</h2></div><span>Readiness engine · evidence based</span></div>
-  <div class="readiness-grid">{% for r in company.readiness %}<div class="ready-card"><div class="ready-top"><b>MODULE {{ r.module_no }}</b><span>{{ r.score|round|int }}%</span></div><h3>{{ r.module_no }} · {{ r.module_name }}</h3><div class="bar"><i style="width:{{ r.score }}%"></i></div><p>{{ r.status or '' }}</p></div>{% endfor %}{% if not company.readiness %}<div class="empty">DATA READINESS · 資料尚未進入健檢階段。</div>{% endif %}</div>
+  <div class="panel-title"><div><span class="eyebrow">DATA READINESS</span><h2>資料健檢</h2></div><a href="/companies/{{ company.id }}/data-intake">Open Data Intake →</a></div>
+  <div class="readiness-grid">{% for r in company.readiness %}<div class="ready-card"><div class="ready-top"><b>MODULE {{ r.module_no }}</b><span>{{ r.score|round|int }}%</span></div><h3>{{ r.module_no }} · {{ r.module_name }}</h3><div class="bar"><i style="width:{{ r.score }}%"></i></div><p>{{ r.status or '' }}</p></div>{% endfor %}{% if not company.readiness %}<div class="empty">DATA READINESS · Awaiting evidence. No readiness percentage will be invented before files are reviewed.</div>{% endif %}</div>
 </section>
 
 <section class="panel" id="tasks">
