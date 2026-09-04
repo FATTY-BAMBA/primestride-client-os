@@ -82,17 +82,14 @@ def get_db():
         db.close()
 
 
-# v0.8.2 temporary bootstrap hook.
-# main.py currently creates the FastAPI instance directly rather than including
-# routers. Patch the shared FastAPI class before `app = FastAPI(...)` executes so
-# the v0.8.2 correction/performance routes can be installed first. This hook is
-# intentionally isolated and should be removed when main.py is split into
-# explicit routers (planned for the next architecture cleanup).
-def _install_v082_bootstrap_hook() -> None:
+# Temporary bootstrap hook while main.py still creates the FastAPI app directly.
+# Keep version-specific extensions isolated so they can move into explicit
+# routers during the architecture cleanup.
+def _install_primestride_bootstrap_hook() -> None:
     try:
         from fastapi import FastAPI
 
-        if getattr(FastAPI, "_primestride_v082_bootstrap", False):
+        if getattr(FastAPI, "_primestride_bootstrap", False):
             return
         original_init = FastAPI.__init__
 
@@ -100,14 +97,16 @@ def _install_v082_bootstrap_hook() -> None:
             original_init(self, *args, **kwargs)
             from .v082_runtime import install_v082
             from .v082_perf import install_v082_perf
+            from .v09_ai import install_v09_ai
 
             install_v082(self)
             install_v082_perf(self)
+            install_v09_ai(self)
 
         FastAPI.__init__ = wrapped_init
-        FastAPI._primestride_v082_bootstrap = True
+        FastAPI._primestride_bootstrap = True
     except Exception as exc:
-        print(f"[v0.8.2] bootstrap hook warning: {exc!r}")
+        print(f"[PrimeStride bootstrap] warning: {exc!r}")
 
 
-_install_v082_bootstrap_hook()
+_install_primestride_bootstrap_hook()
