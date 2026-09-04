@@ -2,6 +2,7 @@
 {% block title %}Client Pipeline · PrimeStride Client OS{% endblock %}
 {% block content %}
 {% set active_count = buckets['New Lead']|length + buckets['Meeting Booked']|length + buckets['Discovery']|length + buckets['Diagnosis Confirmed']|length + buckets['Solution Fit']|length + buckets['Data Requested']|length + buckets['Data Received']|length + buckets['Data Readiness']|length + buckets['Client Blueprint']|length + buckets['Proposal']|length %}
+{% set lead_count = buckets['New Lead']|length %}
 {% set discovery_count = buckets['Meeting Booked']|length + buckets['Discovery']|length + buckets['Diagnosis Confirmed']|length + buckets['Solution Fit']|length %}
 {% set data_count = buckets['Data Requested']|length + buckets['Data Received']|length + buckets['Data Readiness']|length + buckets['Client Blueprint']|length %}
 {% set proposal_count = buckets['Proposal']|length %}
@@ -40,8 +41,8 @@
   </section>
 
   <section class="pipeline-flow" aria-label="PrimeStride sales pipeline">
-    <div class="pipeline-step {% if buckets['New Lead']|length + buckets['Meeting Booked']|length %}is-active{% endif %}">
-      <span class="pipeline-index">01</span><div><small>LEAD</small><b>新機會</b><small>名單 · 初次會議</small></div><strong>{{ buckets['New Lead']|length + buckets['Meeting Booked']|length }}</strong>
+    <div class="pipeline-step {% if lead_count %}is-active{% endif %}">
+      <span class="pipeline-index">01</span><div><small>LEAD</small><b>新機會</b><small>名單 · 初次會議</small></div><strong>{{ lead_count }}</strong>
     </div>
     <div class="pipeline-arrow">→</div>
     <div class="pipeline-step {% if discovery_count %}is-active{% endif %}">
