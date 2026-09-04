@@ -33,6 +33,8 @@ class Company(Base):
     tasks: Mapped[list[Task]] = relationship(back_populates="company", cascade="all, delete-orphan")
     readiness: Mapped[list[Readiness]] = relationship(back_populates="company", cascade="all, delete-orphan")
     timeline: Mapped[list[TimelineEvent]] = relationship(back_populates="company", cascade="all, delete-orphan")
+    memory_items: Mapped[list[ClientMemory]] = relationship(back_populates="company", cascade="all, delete-orphan")
+    intake_files: Mapped[list[IntakeFile]] = relationship(back_populates="company", cascade="all, delete-orphan")
 
 class PreMeetingIntake(Base):
     __tablename__ = "pre_meeting_intakes"
@@ -129,3 +131,28 @@ class TimelineEvent(Base):
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     company: Mapped[Company] = relationship(back_populates="timeline")
+
+class ClientMemory(Base):
+    __tablename__ = "client_memory"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(30), index=True)
+    title: Mapped[str] = mapped_column(String(250))
+    details: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    confidence: Mapped[str] = mapped_column(String(20), default="High")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    company: Mapped[Company] = relationship(back_populates="memory_items")
+
+class IntakeFile(Base):
+    __tablename__ = "intake_files"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
+    filename: Mapped[str] = mapped_column(String(300))
+    category: Mapped[str] = mapped_column(String(80))
+    status: Mapped[str] = mapped_column(String(40), default="Received")
+    source: Mapped[str] = mapped_column(String(80), default="Manual")
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    received_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    company: Mapped[Company] = relationship(back_populates="intake_files")
