@@ -1,26 +1,73 @@
 {% extends "base.html" %}
-{% block title %}Pipeline · PrimeStride Client OS{% endblock %}
+{% block title %}Client Pipeline · PrimeStride Client OS{% endblock %}
 {% block content %}
-<section class="page-head">
-  <div><div class="eyebrow">CLIENT INTELLIGENCE</div><h1>Pipeline</h1><p>每個客戶只有一份永久紀錄。會前 Intake → Discovery → Diagnosis → Data → Blueprint 全部沿用同一份 context。</p></div>
-  <form class="quick-add" method="post" action="/companies">
-    <input name="name" placeholder="公司名稱" required><input name="industry" placeholder="產業"><input name="owner" placeholder="Owner">
-    <button>+ 新增客戶</button>
-  </form>
-</section>
-<section class="board">
-{% for stage in stages %}
-  <div class="column">
-    <div class="column-head"><span>{{ stage }}</span><b>{{ buckets[stage]|length }}</b></div>
-    {% for c in buckets[stage] %}
-      <a class="card" href="/companies/{{ c.id }}">
-        <div class="card-title">{{ c.name }}</div>
-        <div class="muted">{{ c.industry or '未填產業' }}</div>
-        {% if c.next_action %}<div class="next"><span>Next</span>{{ c.next_action }}</div>{% endif %}
-        <div class="meta"><span>{{ c.owner or 'Unassigned' }}</span><span>{{ c.due_date or '' }}</span></div>
-      </a>
+{% set active_count = buckets['New Lead']|length + buckets['Meeting Booked']|length + buckets['Discovery']|length + buckets['Diagnosis Confirmed']|length + buckets['Solution Fit']|length + buckets['Data Requested']|length + buckets['Data Received']|length + buckets['Data Readiness']|length + buckets['Client Blueprint']|length + buckets['Proposal']|length %}
+{% set discovery_count = buckets['Meeting Booked']|length + buckets['Discovery']|length + buckets['Diagnosis Confirmed']|length + buckets['Solution Fit']|length %}
+{% set data_count = buckets['Data Requested']|length + buckets['Data Received']|length + buckets['Data Readiness']|length %}
+{% set proposal_count = buckets['Client Blueprint']|length + buckets['Proposal']|length %}
+{% set won_count = buckets['Won']|length + buckets['Implementation']|length + buckets['Go Live']|length + buckets['Optimization']|length %}
+
+<div class="workspace-shell">
+  <section class="page-head modern-head">
+    <div>
+      <div class="eyebrow">CLIENT INTELLIGENCE</div>
+      <h1>Client Pipeline</h1>
+      <p>每個客戶只保留一份永久紀錄。從第一次接觸到導入，所有 context 持續累積，不重複問。</p>
+    </div>
+    <details class="new-company">
+      <summary class="btn primary">＋ New company</summary>
+      <form class="new-company-form" method="post" action="/companies">
+        <label>Company<input name="name" placeholder="公司名稱" required></label>
+        <label>Industry<input name="industry" placeholder="產業"></label>
+        <label>Owner<input name="owner" placeholder="Owner"></label>
+        <button>Create company</button>
+      </form>
+    </details>
+  </section>
+
+  <section class="metric-grid">
+    <div class="metric"><span>Active accounts</span><strong>{{ active_count }}</strong><small>Open opportunities</small></div>
+    <div class="metric"><span>Discovery</span><strong>{{ discovery_count }}</strong><small>Meeting → fit</small></div>
+    <div class="metric"><span>Data stage</span><strong>{{ data_count }}</strong><small>Request → readiness</small></div>
+    <div class="metric"><span>Blueprint / Proposal</span><strong>{{ proposal_count }}</strong><small>Decision stage</small></div>
+    <div class="metric"><span>Won / Delivery</span><strong>{{ won_count }}</strong><small>Customer lifecycle</small></div>
+  </section>
+
+  <section class="stage-strip">
+    {% for stage, items in buckets.items() %}
+      <div class="stage-token {% if items|length %}has-items{% endif %}"><span>{{ stage }}</span><b>{{ items|length }}</b></div>
     {% endfor %}
-  </div>
-{% endfor %}
-</section>
+  </section>
+
+  <section class="accounts-panel">
+    <div class="section-head">
+      <div><h2>Accounts</h2><p>Focus on the next action, owner and deadline — not just the pipeline label.</p></div>
+    </div>
+    <div class="table-wrap">
+      <table class="accounts-table">
+        <thead>
+          <tr><th>Company</th><th>Stage</th><th>Owner</th><th>Next action</th><th>Due</th></tr>
+        </thead>
+        <tbody>
+          {% set ns = namespace(total=0) %}
+          {% for stage, items in buckets.items() %}
+            {% for c in items %}
+              {% set ns.total = ns.total + 1 %}
+              <tr onclick="window.location='/companies/{{ c.id }}'">
+                <td><div class="account-name">{{ c.name }}</div><div class="account-industry">{{ c.industry or '未填產業' }}</div></td>
+                <td><span class="stage-badge">{{ c.stage }}</span></td>
+                <td>{{ c.owner or 'Unassigned' }}</td>
+                <td class="next-cell">{{ c.next_action or '—' }}</td>
+                <td>{{ c.due_date or '—' }}</td>
+              </tr>
+            {% endfor %}
+          {% endfor %}
+          {% if ns.total == 0 %}
+            <tr class="empty-row"><td colspan="5">No accounts yet. Create the first company to begin.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
 {% endblock %}
