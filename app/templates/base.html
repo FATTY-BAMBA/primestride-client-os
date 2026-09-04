@@ -1,1 +1,26 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}PrimeStride Client OS{% endblock %}</title><link rel="stylesheet" href="/static/app.css"></head><body><header class="topbar"><a class="brand" href="/"><span class="brand-mark">P</span><span>PrimeStride <b>Client OS</b></span></a><div class="badge">v0.2 · Internal</div></header><main>{% block content %}{% endblock %}</main>{% block scripts %}{% endblock %}</body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}PrimeStride Client OS{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark">PS</span>
+        <span class="brand-copy"><strong>PrimeStride</strong><small>Client OS</small></span>
+      </a>
+      <div class="topbar-meta">
+        <span class="status-dot"></span>
+        <span>Internal workspace</span>
+        <span class="version">v0.2</span>
+      </div>
+    </div>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
