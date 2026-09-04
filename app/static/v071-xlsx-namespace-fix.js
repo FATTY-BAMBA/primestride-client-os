@@ -1,9 +1,11 @@
 (() => {
+  if (!location.pathname.includes('/data-intake')) return;
+
   // v0.7.1 compatibility shim for XLSX XML that uses namespace-prefixed tags
   // such as <x:sheet>, <x:row>, <x:c>, <x:v>. The original v0.7 parser used
   // getElementsByTagName('sheet'), which returns no matches for prefixed XML.
-  // This page-local shim preserves normal HTML/XML lookup behavior and falls
-  // back to namespace-aware matching only when the direct lookup is empty.
+  // This page-local shim preserves normal lookup behavior and falls back to
+  // namespace-aware matching only when the direct lookup is empty.
   const patch = (proto) => {
     if (!proto || !proto.getElementsByTagName || proto.__psNamespaceAwareTagLookup) return;
     const original = proto.getElementsByTagName;
