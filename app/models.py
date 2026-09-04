@@ -35,6 +35,8 @@ class Company(Base):
     timeline: Mapped[list[TimelineEvent]] = relationship(back_populates="company", cascade="all, delete-orphan")
     memory_items: Mapped[list[ClientMemory]] = relationship(back_populates="company", cascade="all, delete-orphan")
     intake_files: Mapped[list[IntakeFile]] = relationship(back_populates="company", cascade="all, delete-orphan")
+    readiness_evidence: Mapped[list[ReadinessEvidence]] = relationship(back_populates="company", cascade="all, delete-orphan")
+    decisions: Mapped[list[DecisionLog]] = relationship(back_populates="company", cascade="all, delete-orphan")
 
 class PreMeetingIntake(Base):
     __tablename__ = "pre_meeting_intakes"
@@ -156,3 +158,27 @@ class IntakeFile(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     received_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     company: Mapped[Company] = relationship(back_populates="intake_files")
+
+class ReadinessEvidence(Base):
+    __tablename__ = "readiness_evidence"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
+    module_no: Mapped[int] = mapped_column(Integer, index=True)
+    criterion_key: Mapped[str] = mapped_column(String(100), index=True)
+    status: Mapped[str] = mapped_column(String(30), default="awaiting")
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    company: Mapped[Company] = relationship(back_populates="readiness_evidence")
+
+class DecisionLog(Base):
+    __tablename__ = "decision_log"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
+    title: Mapped[str] = mapped_column(String(250))
+    decision: Mapped[str] = mapped_column(Text)
+    rationale: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="Confirmed")
+    decided_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    company: Mapped[Company] = relationship(back_populates="decisions")
