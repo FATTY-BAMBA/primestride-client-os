@@ -82,62 +82,31 @@ def get_db():
         db.close()
 
 
-# Temporary bootstrap hook while main.py still creates the FastAPI app directly.
-# Keep version-specific extensions isolated so they can move into explicit
-# routers during the architecture cleanup.
-def _install_primestride_bootstrap_hook() -> None:
+# v1.2 compatibility bridge.
+#
+# app/main.py still constructs FastAPI during module import. Until that file is
+# moved behind an application factory, route-shadowing extensions must install at
+# construction time so they remain ahead of legacy prototype routes. The actual
+# extension registry now lives in platform_bootstrap.py; database infrastructure
+# no longer owns component imports or route ordering.
+def _install_app_factory_compatibility_bridge() -> None:
     try:
         from fastapi import FastAPI
 
-        if getattr(FastAPI, "_primestride_bootstrap", False):
+        if getattr(FastAPI, "_primestride_platform_bridge", False):
             return
+
         original_init = FastAPI.__init__
 
         def wrapped_init(self, *args, **kwargs):
             original_init(self, *args, **kwargs)
-            from .v110_lineage import install_v110_lineage
-            from .v112_jobs import install_v112_jobs
-            from .v1111_readiness_fix import install_v1111_readiness_fix
-            from .v111_lifecycle import install_v111_lifecycle
-            from .v110_review import install_v110_review
-            from .v101_runtime import install_v101_runtime
-            from .v101_storage import install_v101_storage
-            from .v082_runtime import install_v082
-            from .v082_perf import install_v082_perf
-            from .v100_storage import install_v100_storage
-            from .v093_ai import install_v093_ai
-            from .v092_ai import install_v092_ai
-            from .v091_ai import install_v091_ai
-            from .v09_ai import install_v09_ai
-
-            # First-class provenance + job recovery + lifecycle must register
-            # before legacy account/intake/readiness routes.
-            install_v110_lineage(self)
-            install_v112_jobs(self)
-            # The hotfix composes lifecycle filtering with the v0.8.5 honest
-            # readiness-range summary shape expected by readiness_framework.html.
-            install_v1111_readiness_fix(self)
-            install_v111_lifecycle(self)
-            # Review override must register before the legacy v0.8 route.
-            install_v110_review(self)
-            # Source-first routes intentionally register before legacy routes so
-            # Starlette resolves the lineage-safe implementations first.
-            install_v101_runtime(self)
-            install_v101_storage(self)
-            install_v082(self)
-            install_v082_perf(self)
-            install_v100_storage(self)
-            # Background start/poll routes are additive; newest synchronous AI
-            # route remains first for compatibility with older clients.
-            install_v093_ai(self)
-            install_v092_ai(self)
-            install_v091_ai(self)
-            install_v09_ai(self)
+            from .platform_bootstrap import install_platform_extensions
+            install_platform_extensions(self)
 
         FastAPI.__init__ = wrapped_init
-        FastAPI._primestride_bootstrap = True
+        FastAPI._primestride_platform_bridge = True
     except Exception as exc:
-        print(f"[PrimeStride bootstrap] warning: {exc!r}")
+        print(f"[PrimeStride platform bridge] warning: {exc!r}")
 
 
-_install_primestride_bootstrap_hook()
+_install_app_factory_compatibility_bridge()
