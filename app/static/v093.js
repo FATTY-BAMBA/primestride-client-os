@@ -19,6 +19,15 @@
     statusEl.className = 'ai09-status';
     statusEl.textContent = text;
   }
+  function sourceContext(companyId){
+    let ctx = window.__PS_SOURCE_FIRST_CONTEXT || null;
+    if (!ctx) {
+      try { ctx = JSON.parse(sessionStorage.getItem(`ps_source_first_${companyId}`) || 'null'); } catch (_) {}
+    }
+    if (!ctx || String(ctx.companyId) !== String(companyId)) return null;
+    if (Date.now() - Number(ctx.created_at || 0) > 10 * 60 * 1000) return null;
+    return ctx;
+  }
 
   // Replace only the long synchronous AI analyze request. v0.9's existing UI
   // still owns file selection, rendering and save review; it simply receives the
@@ -30,6 +39,17 @@
     }
 
     try {
+      const companyMatch = url.match(/\/companies\/(\d+)\/ai-intake\/analyze/);
+      const companyId = companyMatch ? companyMatch[1] : null;
+      if (!companyId) return jsonResponse({error:'Could not determine company id for AI polling.', code:'missing_company_id'}, 500);
+
+      // Source-first intake already retained the original. Carry its immutable
+      // source_id into the AI job so provenance survives browser image compression.
+      const ctx = sourceContext(companyId);
+      if (ctx?.source_id && init?.body instanceof FormData) {
+        init.body.set('source_id', String(ctx.source_id));
+      }
+
       const startUrl = url.replace('/ai-intake/analyze', '/ai-intake/start');
       setProgress('Uploading securely for AI analysis…');
       const startRes = await originalFetch(startUrl, init);
@@ -40,15 +60,16 @@
         return jsonResponse(startData || {error:'AI background job could not be started.'}, startRes.status || 502);
       }
 
-      const jobId = startData.job_id;
-      const companyMatch = url.match(/\/companies\/(\d+)\/ai-intake\/analyze/);
-      const companyId = companyMatch ? companyMatch[1] : null;
-      if (!companyId) return jsonResponse({error:'Could not determine company id for AI polling.', code:'missing_company_id'}, 500);
+      if (ctx?.source_id && startData?.lineage_linked) {
+        try { sessionStorage.removeItem(`ps_source_first_${companyId}`); } catch (_) {}
+        window.__PS_SOURCE_FIRST_CONTEXT = null;
+      }
 
+      const jobId = startData.job_id;
       const started = Date.now();
       const maxWaitMs = 180000;
       let pollCount = 0;
-      try { sessionStorage.setItem(`ps_ai_job_${companyId}`, JSON.stringify({jobId, started, version:VERSION})); } catch (_) {}
+      try { sessionStorage.setItem(`ps_ai_job_${companyId}`, JSON.stringify({jobId, started, version:VERSION, source_id:startData.source_id || null})); } catch (_) {}
 
       while (Date.now() - started < maxWaitMs) {
         pollCount++;
@@ -76,6 +97,8 @@
             filename: startData.filename,
             mime_type: startData.mime_type,
             model: pollData.model || startData.model,
+            source_id: startData.source_id || null,
+            lineage_linked: !!startData.lineage_linked,
           }, 200);
         }
       }
