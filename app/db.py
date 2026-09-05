@@ -96,6 +96,7 @@ def _install_primestride_bootstrap_hook() -> None:
         def wrapped_init(self, *args, **kwargs):
             original_init(self, *args, **kwargs)
             from .v110_lineage import install_v110_lineage
+            from .v111_lifecycle import install_v111_lifecycle
             from .v110_review import install_v110_review
             from .v101_runtime import install_v101_runtime
             from .v101_storage import install_v101_storage
@@ -107,8 +108,11 @@ def _install_primestride_bootstrap_hook() -> None:
             from .v091_ai import install_v091_ai
             from .v09_ai import install_v09_ai
 
-            # v1.1 first-class provenance must exist before source uploads/jobs.
+            # First-class provenance + lifecycle must register before legacy
+            # account/intake/readiness routes so active/test/archive state is the
+            # source of truth for operational counts and readiness.
             install_v110_lineage(self)
+            install_v111_lifecycle(self)
             # Review override must register before the legacy v0.8 route.
             install_v110_review(self)
             # Source-first routes intentionally register before legacy routes so
