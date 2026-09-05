@@ -1,4 +1,4 @@
-// Deterministic ingestion stays at v0.8.4; v0.9.4 governs multimodal AI evidence approval.
+// Deterministic ingestion stays at v0.8.4; v0.9.4.1 hotfixes multimodal approval rendering.
 (() => {
   const metric = document.querySelector('.intake-summary-grid .intake-metric:nth-child(3) strong');
   if (metric) metric.textContent = 'v0.8.4';
@@ -6,14 +6,14 @@
   if (eyebrow) eyebrow.textContent = 'INGESTION INTELLIGENCE · v0.8.4';
 })();
 
-import('/static/v081.js?v=094')
-  .then(() => import('/static/v083.js?v=094'))
-  .then(() => import('/static/v084.js?v=094'))
-  .then(() => import('/static/v09.js?v=094'))
-  .then(() => import('/static/v091.js?v=094'))
-  .then(() => import('/static/v092.js?v=094'))
-  .then(() => import('/static/v093.js?v=094'))
-  .then(() => import('/static/v094.js?v=094'))
+import('/static/v081.js?v=0941')
+  .then(() => import('/static/v083.js?v=0941'))
+  .then(() => import('/static/v084.js?v=0941'))
+  .then(() => import('/static/v09.js?v=0941'))
+  .then(() => import('/static/v091.js?v=0941'))
+  .then(() => import('/static/v092.js?v=0941'))
+  .then(() => import('/static/v093.js?v=0941'))
+  .then(() => import('/static/v094.js?v=0941'))
   .catch((err) => {
     const box = document.getElementById('ingestion-error');
     if (box) {
