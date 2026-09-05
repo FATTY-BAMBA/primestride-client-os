@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = '1.0.2';
+  const VERSION = '1.0.3';
   const panel = document.getElementById('source-vault-panel');
   const lab = document.getElementById('ingestion-lab');
   if (!panel || !lab) return;
@@ -11,8 +11,6 @@
   const status = panel.querySelector('#sv-status');
   if (!fileInput || !category || !oldButton || !status) return;
 
-  // v1.0's button already owns a storage-only listener. Clone it so v1.0.2 can
-  // keep the source-first action without double upload.
   const button = oldButton.cloneNode(true);
   oldButton.replaceWith(button);
   button.id = 'sv-upload';
@@ -112,6 +110,11 @@
       configured = !!data.configured;
       button.disabled = !configured || !fileInput.files[0];
       if (data.tenant_key) tenantNote.textContent = `Tenant storage key: ${data.tenant_key} · ${data.path_pattern}`;
+      if (status.textContent.includes('optional in this preview')) {
+        setStatus(configured
+          ? 'Source-first intake is ready. Choose a file to retain the original and route it automatically for analysis.'
+          : 'Private storage is not configured in this environment yet.');
+      }
     } catch (_) {
       tenantNote.textContent = 'Tenant path unavailable; Source Vault status will control uploads.';
     }
@@ -154,8 +157,6 @@
     }
   });
 
-  // Legacy direct drop zones remain available for debugging, but the source-first
-  // door above is the normal production workflow.
   const directStructured = document.querySelector('#ingestion-lab .ingestion-drop');
   if (directStructured) directStructured.title = 'Advanced/direct inspection. Prefer Source-First Intake for real client files.';
   const directAI = document.querySelector('#ai09-drop');
