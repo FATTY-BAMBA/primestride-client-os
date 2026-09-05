@@ -2,10 +2,10 @@
 
 Central runtime registry for the previously version-stacked implementation.
 
-v1.3 starts Phase 3 of consolidation: lineage, ingestion jobs, and readiness are
-now wired from stable domain packages. Their former v1.1 modules remain thin
-compatibility adapters for older imports while production routing no longer
-depends on release-numbered modules for those domains.
+v1.3 continues Phase 3 consolidation: lineage, ingestion jobs, readiness, source
+lifecycle, and intake review/registration are now wired from stable domain
+packages. Former release-numbered modules remain thin compatibility adapters for
+older imports while production routing depends on stable domains.
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from typing import Callable
 
 from fastapi import FastAPI
 
-PLATFORM_VERSION = "1.3.0"
+PLATFORM_VERSION = "1.3.1"
 
 # Order is behavioral: several newer routes intentionally shadow prototype
 # routes, and Starlette resolves the first matching route.
@@ -22,9 +22,8 @@ INSTALLERS: tuple[tuple[str, str, str], ...] = (
     ("lineage", ".lineage.router", "install_lineage_routes"),
     ("job_recovery", ".jobs.router", "install_job_routes"),
     ("readiness_lifecycle", ".readiness.router", "install_readiness_routes"),
-    ("source_lifecycle", ".v111_lifecycle", "install_v111_lifecycle"),
-    ("review_workflow", ".v110_review", "install_v110_review"),
-    ("source_first_registration", ".v101_runtime", "install_v101_runtime"),
+    ("source_lifecycle", ".lifecycle.router", "install_lifecycle_routes"),
+    ("intake_workflow", ".intake.router", "install_intake_routes"),
     ("source_first_storage", ".v101_storage", "install_v101_storage"),
     ("deterministic_intake", ".v082_runtime", "install_v082"),
     ("readiness_ranges", ".v082_perf", "install_v082_perf"),
@@ -64,6 +63,6 @@ def install_platform_extensions(app: FastAPI) -> None:
             "version": PLATFORM_VERSION,
             "bootstrap": "explicit-application-factory",
             "components": list(installed),
-            "stable_domains": ["lineage", "jobs", "readiness"],
+            "stable_domains": ["lineage", "jobs", "readiness", "lifecycle", "intake"],
             "compatibility_bridge": "none",
         }
