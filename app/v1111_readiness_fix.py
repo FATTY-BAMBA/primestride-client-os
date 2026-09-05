@@ -1,13 +1,14 @@
-"""PrimeStride Client OS v1.1.1.2 readiness consistency hotfix.
+"""PrimeStride Client OS v1.1.1.3 readiness consistency + empty-state UX.
 
 Composes three behaviors on the Readiness page:
 - lifecycle-filtered ACTIVE evidence only
 - v0.8.5 honest readiness-range summaries
 - lifecycle-aware stage/gap gating when no real source is active
 
-When every current file is TEST/ARCHIVED, the account returns to Data Requested
-and the readiness page does not manufacture a specific "ask next" list from zero
-reviewed evidence. The correct next action is to wait for the first real sample.
+When every current file is TEST/ARCHIVED, the account returns to Data Requested,
+the readiness page does not manufacture a specific "ask next" list from zero
+reviewed evidence, and the template presents an intentional waiting state rather
+than a fully expanded empty assessment.
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ from .v111_lifecycle import (
     ensure_lifecycle_rows,
 )
 
-VERSION = "1.1.1.2"
+VERSION = "1.1.1.3"
 
 
 def install_v1111_readiness_fix(app: FastAPI) -> None:
