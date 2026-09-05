@@ -2,13 +2,10 @@
 
 Central runtime registry for the previously version-stacked implementation.
 
-app/main.py now owns an explicit create_app() application factory. The factory
-installs this registry before the legacy prototype routes are declared, preserving
-the route precedence validated through v1.1 without monkeypatching FastAPI or
-coupling application wiring to database infrastructure.
-
-The versioned implementation modules remain temporarily for compatibility while
-we consolidate them into domain routers/services behind this stable registry.
+v1.3 starts Phase 3 of consolidation: lineage, ingestion jobs, and readiness are
+now wired from stable domain packages. Their former v1.1 modules remain thin
+compatibility adapters for older imports while production routing no longer
+depends on release-numbered modules for those domains.
 """
 from __future__ import annotations
 
@@ -17,14 +14,14 @@ from typing import Callable
 
 from fastapi import FastAPI
 
-PLATFORM_VERSION = "1.2.1"
+PLATFORM_VERSION = "1.3.0"
 
 # Order is behavioral: several newer routes intentionally shadow prototype
 # routes, and Starlette resolves the first matching route.
 INSTALLERS: tuple[tuple[str, str, str], ...] = (
-    ("lineage", ".v110_lineage", "install_v110_lineage"),
-    ("job_recovery", ".v112_jobs", "install_v112_jobs"),
-    ("readiness_lifecycle", ".v1111_readiness_fix", "install_v1111_readiness_fix"),
+    ("lineage", ".lineage.router", "install_lineage_routes"),
+    ("job_recovery", ".jobs.router", "install_job_routes"),
+    ("readiness_lifecycle", ".readiness.router", "install_readiness_routes"),
     ("source_lifecycle", ".v111_lifecycle", "install_v111_lifecycle"),
     ("review_workflow", ".v110_review", "install_v110_review"),
     ("source_first_registration", ".v101_runtime", "install_v101_runtime"),
@@ -67,5 +64,6 @@ def install_platform_extensions(app: FastAPI) -> None:
             "version": PLATFORM_VERSION,
             "bootstrap": "explicit-application-factory",
             "components": list(installed),
+            "stable_domains": ["lineage", "jobs", "readiness"],
             "compatibility_bridge": "none",
         }
