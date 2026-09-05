@@ -95,6 +95,8 @@ def _install_primestride_bootstrap_hook() -> None:
 
         def wrapped_init(self, *args, **kwargs):
             original_init(self, *args, **kwargs)
+            from .v101_runtime import install_v101_runtime
+            from .v101_storage import install_v101_storage
             from .v082_runtime import install_v082
             from .v082_perf import install_v082_perf
             from .v100_storage import install_v100_storage
@@ -103,6 +105,10 @@ def _install_primestride_bootstrap_hook() -> None:
             from .v091_ai import install_v091_ai
             from .v09_ai import install_v09_ai
 
+            # Source-first routes intentionally register before legacy routes so
+            # Starlette resolves the lineage-safe implementations first.
+            install_v101_runtime(self)
+            install_v101_storage(self)
             install_v082(self)
             install_v082_perf(self)
             install_v100_storage(self)
