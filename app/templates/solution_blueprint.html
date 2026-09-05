@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Solution Blueprint · {{ company.name }} · PrimeStride Client OS{% endblock %}
+{% block content %}
+<section class="company-head v05-head">
+  <a class="back" href="/companies/{{ company.id }}">← Client Workspace · 客戶工作台</a>
+  <div class="eyebrow">SOLUTION BLUEPRINT · 方案藍圖</div>
+  <h1>{{ company.name }}</h1>
+  <div class="head-tags">
+    <span class="stage-pill">{{ company.stage }}</span>
+    <span>{{ blueprint_mode }}</span>
+    <span>{{ files_received }} files registered</span>
+  </div>
+</section>
+
+<div class="v05-page blueprint-page">
+  {% if files_received == 0 %}
+  <section class="blueprint-warning">
+    <b>Blueprint skeleton only · 目前是藍圖骨架</b>
+    <p>No client files have been reviewed yet. Confirmed facts are shown as confirmed; anything dependent on operational evidence remains explicitly TBD.</p>
+    <small>目前尚未檢視客戶實際資料，因此不猜報價公式、不猜製程、不猜 KPI。</small>
+  </section>
+  {% endif %}
+
+  <div class="blueprint-top-grid">
+    <section class="panel">
+      <div class="panel-title"><div><span class="eyebrow">CONFIRMED SCOPE</span><h2>Working Scope · 已確認方向</h2></div></div>
+      <div class="scope-cards">
+        {% for phase in phases %}
+        <div class="scope-card"><span>{{ '%02d'|format(phase.module_no) }}</span><div><b>{{ phase.name }}</b><small>{{ phase.name_zh }}</small></div></div>
+        {% endfor %}
+      </div>
+      <p class="muted">Module interest is confirmed. Exact implementation order and feature depth remain subject to evidence review.</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><div><span class="eyebrow">CURRENT STATE</span><h2>Evidence Status · 現況證據</h2></div></div>
+      {% if files_received == 0 %}
+        <div class="blueprint-state awaiting"><b>Awaiting client evidence</b><p>Phase 0 request sent. No sample files reviewed yet.</p></div>
+      {% else %}
+        <div class="blueprint-state active"><b>{{ files_received }} files registered</b><p>Use Data Intake + Readiness to validate the actual current state before presenting it as fact.</p></div>
+      {% endif %}
+      <a class="text-link" href="/companies/{{ company.id }}/data-intake">Open Data Intake →</a>
+    </section>
+  </div>
+
+  <section class="panel operating-spine-panel">
+    <div class="panel-title"><div><span class="eyebrow">PROPOSED OPERATING SPINE</span><h2>Reusable Platform Backbone · 可重用營運主幹</h2></div><span>Hypothesis until validated</span></div>
+    <div class="operating-spine">
+      {% for node in operating_spine %}
+        <div class="spine-node"><span>{{ '%02d'|format(loop.index) }}</span><b>{{ node.en }}</b><small>{{ node.zh }}</small></div>
+        {% if not loop.last %}<div class="spine-arrow">→</div>{% endif %}
+      {% endfor %}
+    </div>
+    <p>This is the reusable ④→⑤→⑥ platform spine, not a claim about the client's exact current workflow. The client-specific workflow will replace this hypothesis only after evidence is reviewed.</p>
+  </section>
+
+  <div class="v05-two-col">
+    <section class="panel">
+      <div class="panel-title"><div><span class="eyebrow">KNOWN</span><h2>Confirmed Context · 已知</h2></div></div>
+      <div class="blueprint-memory-list">
+        {% for item in memory.known %}<div><span>✓</span><div><b>{{ item.title }}</b>{% if item.source %}<small>{{ item.source }}</small>{% endif %}</div></div>{% endfor %}
+        {% if not memory.known %}<p class="muted">No confirmed context yet.</p>{% endif %}
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><div><span class="eyebrow">TBD</span><h2>Must Be Proven · 待確認</h2></div></div>
+      <div class="blueprint-memory-list unknown-list">
+        {% for item in memory.unknown %}<div><span>?</span><div><b>{{ item.title }}</b>{% if item.details %}<small>{{ item.details }}</small>{% endif %}</div></div>{% endfor %}
+        {% if not memory.unknown %}<p class="muted">No open unknowns.</p>{% endif %}
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-title"><div><span class="eyebrow">IMPLEMENTATION SHAPE</span><h2>Phased Delivery · 分階段導入</h2></div><span>Working hypothesis</span></div>
+    <div class="phase-grid">
+      {% for phase in phases %}
+      <div class="phase-card">
+        <span>PHASE {{ loop.index }}</span>
+        <h3>{{ phase.name }}</h3>
+        <small>{{ phase.name_zh }}</small>
+        <p>{{ phase.purpose }}</p>
+        <div class="phase-proof"><b>Needs evidence:</b><span>{{ phase.needs }}</span></div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title"><div><span class="eyebrow">READINESS</span><h2>Evidence Readiness · 證據準備度</h2></div><a href="/companies/{{ company.id }}/readiness-framework">Open Framework →</a></div>
+    <div class="blueprint-readiness-grid">
+      {% for summary in summaries %}
+      <div class="blueprint-readiness-card">
+        <span>MODULE {{ '%02d'|format(summary.module_no) }}</span>
+        <b>{{ summary.name }}</b>
+        {% if summary.score is none %}<strong>Awaiting evidence</strong>{% else %}<strong>{{ summary.score|round|int }}% · {{ summary.score_label }}</strong>{% endif %}
+        <small>{{ summary.review_progress|round|int }}% evidence reviewed</small>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel decision-panel">
+    <div class="panel-title"><div><span class="eyebrow">DECISION LOG</span><h2>Decisions We Can Trace · 決策紀錄</h2></div><span>{{ decisions|length }} records</span></div>
+    <div class="decision-list">
+      {% for d in decisions %}
+      <div class="decision-row">
+        <span class="decision-status {{ d.status|lower|replace(' ','-') }}">{{ d.status }}</span>
+        <div><b>{{ d.title }}</b><p>{{ d.decision }}</p>{% if d.rationale %}<small>Why: {{ d.rationale }}</small>{% endif %}{% if d.source %}<small>Source: {{ d.source }}</small>{% endif %}</div>
+        <time>{{ d.decided_at.strftime('%Y-%m-%d') }}</time>
+      </div>
+      {% endfor %}
+      {% if not decisions %}<p class="muted">No decisions recorded yet.</p>{% endif %}
+    </div>
+
+    <details class="decision-add">
+      <summary>＋ Add decision · 新增決策</summary>
+      <form class="grid-form" method="post" action="/companies/{{ company.id }}/decisions">
+        <label>STATUS<select name="status"><option>Confirmed</option><option>Pending</option><option>Superseded</option></select></label>
+        <label>SOURCE<input name="source" placeholder="Meeting / PrimeStride / Client approval"></label>
+        <label class="wide">TITLE<input name="title" required placeholder="Short decision title"></label>
+        <label class="wide">DECISION<textarea name="decision" required placeholder="What was decided?"></textarea></label>
+        <label class="wide">RATIONALE<textarea name="rationale" placeholder="Why did we choose this?"></textarea></label>
+        <button>Save Decision</button>
+      </form>
+    </details>
+  </section>
+
+  <section class="panel blueprint-next-card">
+    <div><span class="eyebrow">NEXT CLIENT DELIVERABLE</span><h2>{% if files_received == 0 %}Data Readiness Report{% else %}Evidence-informed Solution Blueprint{% endif %}</h2><p>We only move from hypothesis to client-specific recommendation as evidence is confirmed.</p></div>
+    <a class="btn primary" href="/companies/{{ company.id }}/stage-intelligence">See Stage Intelligence</a>
+  </section>
+</div>
+{% endblock %}

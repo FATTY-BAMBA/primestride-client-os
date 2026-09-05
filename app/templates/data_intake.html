@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Data Intake · {{ company.name }} · PrimeStride Client OS{% endblock %}
+{% block content %}
+<section class="company-head intake-head">
+  <a class="back" href="/companies/{{ company.id }}">← Client Workspace · 客戶工作台</a>
+  <div class="eyebrow">DATA INTAKE · 資料匯入</div>
+  <h1>{{ company.name }}</h1>
+  <div class="head-tags">
+    <span class="stage-pill">{{ company.stage }}</span>
+    <span>{{ files_received }} files registered</span>
+    <span>Next milestone: Data Readiness Assessment</span>
+  </div>
+</section>
+
+<div class="intake-shell">
+  <section class="intake-summary-grid">
+    <div class="intake-metric"><span>FILES RECEIVED</span><strong>{{ files_received }}</strong><small>已收到／登記檔案</small></div>
+    <div class="intake-metric"><span>DATASETS DETECTED</span><strong>{% if files_received %}{{ received_categories|length }}{% else %}0{% endif %}</strong><small>目前已辨識資料類別</small></div>
+    <div class="intake-metric"><span>FIELD INSPECTION</span><strong>v0.8.2</strong><small>Messy-data detection + mapping</small></div>
+    <div class="intake-metric"><span>NEEDS REVIEW</span><strong>{{ needs_review|default(files_received) }}</strong><small>{% if files_received %}尚未人工確認的檔案{% else %}等待第一批資料{% endif %}</small></div>
+  </section>
+
+  {% if files_received == 0 %}
+  <section class="intake-waiting">
+    <div class="waiting-icon">↓</div>
+    <div>
+      <span class="eyebrow">CURRENT STATE</span>
+      <h2>Waiting for the client's first sample upload.</h2>
+      <p>Do not send another broad data request. The Phase 0 checklist has already been sent. Once the first files arrive, PrimeStride reviews what is actually available before asking for anything else.</p>
+      <small>目前不需要再追一份完整資料清單。先看客戶實際上傳的第一批資料，再只補最小缺口。</small>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="panel ingestion-lab" id="ingestion-lab" data-company-id="{{ company.id }}">
+    <div class="ingestion-lab-head">
+      <div>
+        <span class="eyebrow">INGESTION INTELLIGENCE · v0.8.2</span>
+        <h2>Inspect → Detect → Map → Confirm</h2>
+        <p>Open a sample locally, find the strongest table region, suggest canonical mappings, then save only the evidence you approve. A saved inspection stays in <b>Needs Review</b> until you explicitly confirm the file below.</p>
+      </div>
+      <span class="privacy-pill">LOCAL-FIRST · FILE BYTES STAY IN THIS BROWSER</span>
+    </div>
+
+    <label class="ingestion-drop" id="ingestion-drop">
+      <input type="file" id="ingestion-file" accept=".csv,.tsv,.txt,.json,.xlsx">
+      <strong>Drop one sample file here, or click to inspect locally</strong>
+      <span>把一份真實樣本拖進來。先看資料，再決定要問客戶什麼。</span>
+      <div class="ingestion-support"><span>CSV</span><span>TSV</span><span>JSON</span><span>XLSX · multi-sheet scan</span></div>
+    </label>
+    <div id="ingestion-error" class="ingestion-error"></div>
+
+    <div class="inspection-results" id="inspection-results">
+      <div class="inspection-summary">
+        <div class="inspection-stat"><span>ROWS</span><strong id="stat-rows">0</strong><small>records inspected</small></div>
+        <div class="inspection-stat"><span>FIELDS</span><strong id="stat-fields">0</strong><small>columns detected</small></div>
+        <div class="inspection-stat"><span>MAPPED</span><strong id="stat-mapped">0</strong><small>canonical suggestions</small></div>
+        <div class="inspection-stat"><span>QUALITY FLAGS</span><strong id="stat-quality">0</strong><small>structural issues</small></div>
+        <div class="inspection-stat"><span>FILE</span><strong id="stat-filetype">—</strong><small>hash <span id="stat-hash">—</span></small></div>
+      </div>
+
+      <div class="inspection-controls">
+        <label>INFERRED CATEGORY · 推測類別<select id="inspection-category">{% for key,en,zh in expected_categories %}<option value="{{ key }}">{{ en }} · {{ zh }}</option>{% endfor %}</select></label>
+        <label>SOURCE · 來源<input id="inspection-source" value="Local browser inspection"></label>
+        <label>FILE · 檔案<div style="margin-top:7px"><b id="inspection-filename">—</b><small id="inspection-meta" style="display:block;color:#7b888a;margin-top:3px">—</small></div></label>
+        <a class="btn secondary" href="/companies/{{ company.id }}/readiness-framework">Open Readiness →</a>
+      </div>
+      <div class="xlsx-note" id="xlsx-sheet-note"></div>
+
+      <div class="inspection-two-col">
+        <section class="inspection-box">
+          <div class="inspection-box-head"><b>Detected Fields & Canonical Mapping · 欄位偵測與映射</b><span>Rule-based suggestion · human review required</span></div>
+          <div class="detected-table-wrap"><table class="detected-table"><thead><tr><th>SOURCE FIELD</th><th>CANONICAL TARGET</th><th>CONFIDENCE</th><th>MISSING</th><th>UNIQUE</th></tr></thead><tbody id="detected-fields-body"></tbody></table></div>
+        </section>
+
+        <div style="display:grid;gap:12px">
+          <section class="inspection-box">
+            <div class="inspection-box-head"><b>Quality Signals · 品質訊號</b><span>structural profile</span></div>
+            <div class="quality-list" id="quality-list"></div>
+          </section>
+          <section class="inspection-box">
+            <div class="inspection-box-head"><b>Suggested Readiness Evidence · 建議證據</b><span>uncheck anything you do not trust</span></div>
+            <div class="evidence-suggestion-list" id="evidence-suggestions"></div>
+          </section>
+        </div>
+      </div>
+
+      <section class="inspection-preview">
+        <div class="inspection-box-head"><b>Local Preview · 本機預覽</b><span>first 8 rows · maximum 14 displayed fields</span></div>
+        <div class="preview-table-wrap"><table class="preview-table" id="preview-table"></table></div>
+      </section>
+
+      <div class="inspection-savebar">
+        <div><p><b>Confirm before saving.</b> Client OS stores the filename, inspection summary, hash and only the readiness evidence you leave checked. The original file is not persisted by this preview.</p><small>After saving, use the file card below to reclassify/correct anything necessary, then click <b>Confirm Review</b>. The account advances to Data Readiness only when every registered file is reviewed and approved evidence exists.</small></div>
+        <div><button id="inspection-save" type="button">Save Inspection + Approved Evidence</button><span id="inspection-save-status" class="save-status"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="intake-main-grid">
+    <section class="panel intake-categories">
+      <div class="panel-title">
+        <div><span class="eyebrow">EXPECTED DATA</span><h2>Expected Categories · 預期資料類別</h2></div>
+        <span>{{ received_categories|length }}/{{ expected_categories|length }} categories</span>
+      </div>
+      <div class="category-list">
+        {% for key,en,zh in expected_categories %}
+        <div class="category-row {% if key in received_categories %}is-received{% endif %}">
+          <span class="category-status">{% if key in received_categories %}✓{% else %}○{% endif %}</span>
+          <div><b>{{ en }}</b><small>{{ zh }}</small></div>
+          <span>{% if key in received_categories %}Received{% else %}Waiting{% endif %}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="intake-rule">
+        <b>PrimeStride rule</b>
+        <p>Missing category ≠ project blocked. We decide whether a gap matters only after reviewing the actual files.</p>
+      </div>
+    </section>
+
+    <aside class="panel intake-next">
+      <div class="panel-title"><div><span class="eyebrow">NEXT MILESTONE</span><h2>Data Readiness</h2></div></div>
+      <ol class="next-sequence">
+        <li class="{% if files_received == 0 %}current{% endif %}"><span>01</span><div><b>Receive samples</b><small>客戶上傳現有資料</small></div></li>
+        <li class="{% if files_received > 0 and (needs_review|default(files_received)) > 0 %}current{% endif %}"><span>02</span><div><b>Classify + review files</b><small>辨識用途並人工確認</small></div></li>
+        <li><span>03</span><div><b>Detect fields</b><small>找出可用欄位與關係</small></div></li>
+        <li><span>04</span><div><b>Map canonical model</b><small>映射到 PrimeStride 標準模型</small></div></li>
+        <li class="{% if company.stage == 'Data Readiness' %}current{% endif %}"><span>05</span><div><b>Assess readiness</b><small>只根據證據計算準備度</small></div></li>
+        <li><span>06</span><div><b>Ask only for gaps</b><small>只補真正會擋住下一步的資料</small></div></li>
+      </ol>
+    </aside>
+  </div>
+
+  <section class="panel intake-files-panel">
+    <div class="panel-title">
+      <div><span class="eyebrow">FILE INVENTORY</span><h2>Received Files · 已收資料</h2></div>
+      <span>v0.8.2 correction lifecycle · every change leaves a timeline event</span>
+    </div>
+    {% if company.intake_files %}
+    <div class="file-list">
+      {% for f in company.intake_files %}
+      <div class="file-row" id="file-{{ f.id }}" style="grid-template-columns:40px minmax(0,1fr) auto;align-items:start">
+        <div class="file-icon">▤</div>
+        <div class="file-main">
+          <b>{{ f.filename }}</b>
+          <small>{{ f.category }} · {{ f.source }} · {{ f.received_at.strftime('%Y-%m-%d %H:%M') }}</small>
+          {% if f.notes %}<p>{{ f.notes }}</p>{% endif %}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:10px">
+            <form method="post" action="/companies/{{ company.id }}/intake-files/{{ f.id }}/reclassify" style="display:flex;gap:6px;align-items:end">
+              <label style="font-size:9px;font-weight:700;color:#687779">CLASSIFICATION · 類別
+                <select name="category" style="display:block;margin-top:3px;padding:6px;border:1px solid #d5ddda;border-radius:5px;background:#fff;font-size:10px">
+                  {% for key,en,zh in expected_categories %}<option value="{{ key }}" {% if key == f.category %}selected{% endif %}>{{ en }} · {{ zh }}</option>{% endfor %}
+                </select>
+              </label>
+              <button class="btn secondary" style="font-size:9px;padding:7px 9px">Reclassify</button>
+            </form>
+            {% if f.status != 'Reviewed' %}
+            <form method="post" action="/companies/{{ company.id }}/intake-files/{{ f.id }}/review">
+              <button class="btn primary" style="font-size:9px;padding:7px 9px">Confirm Review · 確認檢視</button>
+            </form>
+            {% endif %}
+            <form method="post" action="/companies/{{ company.id }}/intake-files/{{ f.id }}/remove" onsubmit="return confirm('Remove this intake record and evidence sourced only from it?');">
+              <button class="btn secondary" style="font-size:9px;padding:7px 9px">Remove test/file record</button>
+            </form>
+          </div>
+        </div>
+        <span class="file-status">{{ f.status }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="file-empty">
+      <b>No files registered yet.</b>
+      <p>When the client uploads data, this becomes the permanent file inventory and starting point for classification, field detection and source lineage.</p>
+    </div>
+    {% endif %}
+
+    <details class="manual-register">
+      <summary>＋ Register a received file manually · 手動登記已收到檔案</summary>
+      <form method="post" action="/companies/{{ company.id }}/data-intake/register" class="grid-form intake-register-form">
+        <label class="wide">FILE NAME · 檔名<input name="filename" placeholder="例如：2025報價紀錄.xlsx" required></label>
+        <label>CATEGORY · 類別<select name="category">{% for key,en,zh in expected_categories %}<option value="{{ key }}">{{ en }} · {{ zh }}</option>{% endfor %}</select></label>
+        <label>SOURCE · 來源<select name="source"><option>Google Drive</option><option>Email</option><option>Manual</option><option>Client Portal</option></select></label>
+        <label class="wide">NOTES · 備註<input name="notes" placeholder="Optional context"></label>
+        <button>Register File · 登記檔案</button>
+      </form>
+    </details>
+  </section>
+
+  <section class="panel intake-memory-snapshot">
+    <div class="panel-title"><div><span class="eyebrow">CLIENT MEMORY</span><h2>What we already know · 已知脈絡</h2></div><a href="/companies/{{ company.id }}#memory">Open full memory →</a></div>
+    <div class="memory-mini-grid">
+      <div><span>KNOWN</span>{% for item in memory.known[:4] %}<p>✓ {{ item.title }}</p>{% endfor %}</div>
+      <div><span>UNKNOWN</span>{% for item in memory.unknown[:4] %}<p>? {{ item.title }}</p>{% endfor %}</div>
+      <div><span>DO NOT ASK AGAIN</span>{% for item in memory.do_not_ask[:3] %}<p>× {{ item.title }}</p>{% endfor %}</div>
+      <div><span>NEXT BEST QUESTION</span>{% for item in memory.next_question[:2] %}<p>→ {{ item.title }}</p>{% endfor %}</div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/v07.js?v=082"></script>{% endblock %}

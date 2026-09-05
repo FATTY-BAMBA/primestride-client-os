@@ -1,0 +1,86 @@
+/* PrimeStride Client OS v1.0.3 — hierarchy, width and progressive-disclosure pass.
+   This layer focuses on the screenshots from Sep 5: make the primary workflow
+   dominant, reduce technical noise, and keep operational text comfortably readable. */
+
+/* Data Intake should use desktop space like a professional operations console. */
+.intake-head,.intake-shell{max-width:1280px!important;width:calc(100% - 48px);margin-left:auto!important;margin-right:auto!important}
+.intake-head{padding-left:0!important;padding-right:0!important}
+.intake-shell{padding-bottom:56px}
+.intake-summary-grid{gap:14px!important;margin-bottom:18px!important}
+.intake-metric{padding:18px 19px!important;min-height:104px!important}
+.intake-metric span{font-size:11px!important;letter-spacing:.07em}
+.intake-metric strong{font-size:28px!important;line-height:1.05}
+.intake-metric small{font-size:11.5px!important;line-height:1.45!important}
+
+/* Source-first is the primary workflow, so give it clear visual priority. */
+#source-vault-panel{border:1px solid #bcd4cc!important;box-shadow:0 8px 26px rgba(29,73,66,.07)!important;margin-bottom:18px!important}
+#source-vault-panel .sv-head h2{font-size:23px!important;letter-spacing:-.02em;line-height:1.25!important}
+#source-vault-panel .sv-head p{font-size:13px!important;line-height:1.6!important;max-width:860px!important}
+#source-vault-panel .sv-upload{grid-template-columns:minmax(0,1fr) 250px auto!important;gap:12px!important}
+#source-vault-panel .sv-table th{padding:11px 10px!important}
+#source-vault-panel .sv-table td{padding:11px 10px!important}
+
+/* Analysis workbenches are secondary tools after the source has been retained. */
+.ps-analysis-divider{display:flex;align-items:center;gap:12px;margin:22px 0 12px;color:#667679}
+.ps-analysis-divider:before,.ps-analysis-divider:after{content:'';height:1px;background:#dce4e1;flex:1}
+.ps-analysis-divider span{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+.ingestion-lab,#ai-intake-lab{box-shadow:none!important;border-color:#dbe3e0!important}
+.ps-direct-tools{margin-top:12px;border-top:1px solid #e7ecea;padding-top:10px}
+.ps-direct-tools summary{cursor:pointer;list-style:none;color:#4f6664;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.ps-direct-tools summary::-webkit-details-marker{display:none}
+.ps-direct-tools summary:before{content:'+';width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#edf3f1;color:#376e68;font-size:12px}
+.ps-direct-tools[open] summary:before{content:'−'}
+.ps-direct-tools .ingestion-drop,.ps-direct-tools .ai09-drop{margin-top:10px!important;min-height:120px!important;padding:18px!important}
+
+/* File inventory: make the human decision obvious; technical traces are on demand. */
+.intake-files-panel{padding:22px!important}
+.file-row{padding:18px 2px!important;gap:12px!important;border-bottom:1px solid #e8eeeb!important}
+.file-icon{width:32px!important;height:32px!important;font-size:13px!important;border-radius:7px!important}
+.file-main>b{font-size:14px!important;line-height:1.35!important;color:#203336!important}
+.file-main>small{font-size:11.5px!important;line-height:1.45!important;color:#738183!important;margin-top:3px!important}
+.file-main>p{font-size:11.5px!important;line-height:1.5!important;color:#607174!important}
+.file-status{font-size:10.5px!important;padding:5px 8px!important}
+.file-main form label{font-size:10.5px!important;line-height:1.35!important}
+.file-main form select{font-size:12px!important;padding:8px 9px!important;min-height:36px!important}
+.file-main form .btn,.file-main form button{font-size:12px!important;padding:8px 11px!important;min-height:36px!important}
+.ps-file-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.ps-file-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border-radius:999px;background:#f1f5f3;color:#526764;font-size:10.5px;font-weight:700;border:1px solid #e0e7e4}
+.ps-file-chip.good{background:#edf7f3;color:#2f675b;border-color:#d3e5de}
+.ps-file-chip.ai{background:#f3f0f8;color:#5a5274;border-color:#e3ddef}
+.ps-file-technical{margin-top:9px;max-width:100%}
+.ps-file-technical summary{cursor:pointer;color:#5e716f;font-size:11px;font-weight:700}
+.ps-file-technical pre{white-space:pre-wrap;word-break:break-word;max-height:180px;overflow:auto;margin:8px 0 0;padding:10px 11px;border:1px solid #e2e8e5;background:#f7f9f8;border-radius:7px;font:10.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:#596b69}
+
+/* Expected data + milestone + memory need to scan without squinting. */
+.category-row{padding:13px 2px!important}
+.category-row b{font-size:13px!important}
+.category-row small{font-size:11.5px!important;margin-top:2px!important}
+.category-row>span:last-child{font-size:11.5px!important}
+.intake-rule b{font-size:12px!important}
+.intake-rule p{font-size:11.5px!important;line-height:1.5!important}
+.next-sequence li{padding:12px 0!important}
+.next-sequence b{font-size:12.5px!important}
+.next-sequence small{font-size:11px!important;line-height:1.4!important}
+.memory-mini-grid{gap:12px!important}
+.memory-mini-grid>div{padding:14px!important}
+.memory-mini-grid span{font-size:10.5px!important}
+.memory-mini-grid p{font-size:11.5px!important;line-height:1.45!important;margin:7px 0 0!important}
+.intake-memory-snapshot .panel-title a{font-size:11.5px!important;font-weight:700!important;color:#356c64!important}
+
+/* Pipeline: preserve compactness but make secondary information normal-size. */
+.pipeline-workspace{max-width:1280px!important;margin-left:auto!important;margin-right:auto!important}
+.pipeline-step small{font-size:11px!important;line-height:1.35!important}
+.pipeline-step b{font-size:13.5px!important}
+.pipeline-index{font-size:10.5px!important}
+.table-legend{font-size:11px!important}
+.attention-kicker{font-size:10px!important}
+.attention-item b,.focus-item b{font-size:12.5px!important}
+.attention-item small,.focus-item small{font-size:11px!important;line-height:1.4!important}
+.focus-item p{font-size:12px!important;line-height:1.45!important}
+.attention-empty{font-size:11.5px!important}
+
+@media(max-width:900px){
+  .intake-head,.intake-shell{width:calc(100% - 28px)!important}
+  #source-vault-panel .sv-upload{grid-template-columns:1fr!important}
+  .pipeline-workspace{max-width:none!important}
+}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}{% block title %}Meeting Intelligence · {{ company.name }}{% endblock %}{% block content %}
+
+<section class="capture-shell">
+  <div class="capture-panel">
+    <div class="capture-head">
+      <div>
+        <div class="eyebrow">MEETING CAPTURE · 會議智慧</div>
+        <h2>Paste the notes once. Turn them into reusable client memory.</h2>
+        <p>Capture facts, pains, unknowns, decisions and module signals before they disappear into a notebook or chat history. Nothing is saved automatically — PrimeStride reviews each suggestion first.</p>
+      </div>
+      <span class="capture-mode">v0.6 · HUMAN REVIEW REQUIRED</span>
+    </div>
+    <div class="capture-body">
+      <div class="capture-grid">
+        <div class="capture-input">
+          <label>MEETING NOTES / TRANSCRIPT · 會議筆記／逐字稿</label>
+          <textarea id="captureNotes" placeholder="Paste raw meeting notes here. Chinese or English is fine. You do not need to clean or structure the notes first."></textarea>
+          <div class="capture-actions">
+            <button type="button" id="analyzeNotes">Analyze Notes · 分析筆記</button>
+            <small>Suggestions stay local in the browser until you explicitly save them.</small>
+          </div>
+        </div>
+        <div class="capture-principles">
+          <div class="capture-principle"><b>Never Ask Twice</b><small>Confirmed facts can become permanent Client Memory.</small></div>
+          <div class="capture-principle"><b>Human-reviewed</b><small>The system proposes. A PrimeStride operator decides what becomes truth.</small></div>
+          <div class="capture-principle"><b>One source, many updates</b><small>A meeting can update memory, pain points, decisions and future questions without retyping.</small></div>
+          <div class="capture-principle"><b>Evidence-aware</b><small>Meeting notes can add context, but they do not create Data Readiness scores without data evidence.</small></div>
+        </div>
+      </div>
+      <div class="capture-disclaimer"><b>Current v0.6 extraction:</b> transparent rule-based suggestions are used to validate the review workflow before the central AI Gateway is connected. The save/confirm flow is the production pattern; the extractor can later be replaced without changing the client record model.</div>
+    </div>
+    <div class="capture-results" id="captureResults" hidden>
+      <div class="capture-results-head"><h3>Suggested Updates · 建議更新</h3><span id="captureCount">0 suggestions</span></div>
+      <div class="proposal-list" id="proposalList"></div>
+      <div class="capture-empty" id="proposalEmpty" hidden>No clear reusable items detected yet. Keep the raw notes — not every sentence needs to become permanent client memory.</div>
+    </div>
+  </div>
+</section>
+
+<section class="meeting-shell"><div class="meeting-top"><a class="back" href="/companies/{{ company.id }}">← {{ company.name }}</a><div><div class="eyebrow">LIVE DISCOVERY</div><h1>探索訪談 · 先理解，再診斷，再介紹</h1><p>Discovery Meeting · 不用照稿問。把問題當作 guardrails，客戶已經回答過的就跳過。</p></div><div class="progress-copy"><b id="progressText">1 / 8</b><span>DISCOVERY · 探索</span></div></div>
+<div class="meeting-progress"><i id="progressBar"></i></div>
+<form id="meetingForm" method="post" action="/companies/{{ company.id }}/discovery-meeting">
+{% set d=company.discovery %}
+<div class="wizard-step active" data-step="1"><div class="qno">01 · CURRENT FLOW · 目前流程</div><h2>先帶我走一次：從客戶詢價／下單，到最後出貨，現在大概怎麼走？</h2><p>Understand the flow · 先理解全流程，不急著判斷。</p><textarea name="current_flow" placeholder="例如：詢價 → 業務整理規格 → 老闆報價 → 接單 → 開工單 → 生產 → 出貨">{{ d.current_flow if d else '' }}</textarea></div>
+<div class="wizard-step" data-step="2"><div class="qno">02 · BOTTLENECK · 最大瓶頸</div><h2>整個流程裡，哪一個環節最常等人、找資料、重複輸入或出錯？</h2><p>Find what matters first · 找出真正值得先解的 bottleneck。</p><textarea name="biggest_bottleneck">{{ d.biggest_bottleneck if d else '' }}</textarea></div>
+<div class="wizard-step" data-step="3"><div class="qno">03 · KEY PERSON · 關鍵人依賴</div><h2>哪一件事最常需要老闆／主管本人介入？如果他今天不在會怎樣？</h2><textarea name="key_person_dependency">{{ d.key_person_dependency if d else '' }}</textarea><label class="inline-label">CUSTOMER VOICE · 客戶原話（值得保留的一句）<textarea name="customer_words">{{ d.customer_words if d else '' }}</textarea></label></div>
+<div class="wizard-step" data-step="4"><div class="qno">04 · REPEATED QUESTIONS · 重複詢問</div><h2>客戶最常打電話或 LINE 來問什麼？現在誰在回答？</h2><textarea name="repeated_questions">{{ d.repeated_questions if d else '' }}</textarea></div>
+<div class="wizard-step" data-step="5"><div class="qno">05 · QUOTING · 報價</div><h2>報價現在怎麼算？一張通常多久？不同人會不會報出不同結果？</h2><textarea name="quote_process">{{ d.quote_process if d else '' }}</textarea><label class="inline-label">BASELINE · 可量化基準<textarea name="baseline_notes" placeholder="例如：平均 45 分鐘/張，每月約 80 張">{{ d.baseline_notes if d else '' }}</textarea></label></div>
+<div class="wizard-step" data-step="6"><div class="qno">06 · PRODUCTION · 生產追蹤</div><h2>一張單進到生產後，現在怎麼知道做到哪一站？延誤通常怎麼被發現？</h2><textarea name="production_tracking">{{ d.production_tracking if d else '' }}</textarea><label class="inline-label">SYSTEMS & DATA · 現有系統／資料<textarea name="existing_systems">{{ d.existing_systems if d else (company.intake.current_tools if company.intake else '') }}</textarea></label></div>
+<div class="wizard-step" data-step="7"><div class="qno">07 · MANAGEMENT · 經營視角</div><h2>老闆每週／每月最想看到哪幾個數字？現在要花多久才能整理出來？</h2><textarea name="management_metrics">{{ d.management_metrics if d else '' }}</textarea></div>
+<div class="wizard-step" data-step="8"><div class="qno">08 · PRIORITY + FIT · 優先順序與適配度</div><h2>如果只能先改善一件事，哪一件改善後會最有感？</h2><textarea name="priority_improvement">{{ d.priority_improvement if d else (company.intake.primary_priority if company.intake else '') }}</textarea><label class="inline-label">SUCCESS · 成功的樣子是什麼？<textarea name="success_definition">{{ d.success_definition if d else '' }}</textarea></label><div class="review-card"><h3>TOP 3 PAIN POINTS · 最優先問題</h3><input name="pain1" placeholder="#1 最痛的問題"><input name="pain2" placeholder="#2 第二優先"><input name="pain3" placeholder="#3 第三優先"><h3>MODULE FIT · 模組適配度</h3><div class="module-fit-grid">{% for no,name in modules.items() %}<label>{{ no }} · {{ name }}<select name="module{{ no }}"><option>Low</option><option>Medium</option><option>High</option></select></label>{% endfor %}</div><h3>NEXT ACTION · 離開會議前一定要有下一步</h3><div class="next-grid"><input name="next_action" placeholder="具體 Next Action" value="{{ company.next_action or '' }}" required><input name="owner" placeholder="PrimeStride Owner · 我方負責人" value="{{ company.owner or '' }}"><input type="date" name="due_date" value="{{ company.due_date or '' }}"></div></div></div>
+<div class="meeting-nav"><button type="button" class="ghost" id="prevBtn">← Back</button><div class="meeting-rule">SUCCESS = <b>聽懂 + 確認下一步</b>，不是把 8 題全部問完。</div><button type="button" id="nextBtn">Next →</button><button type="submit" id="finishBtn" class="finish" hidden>Finish Discovery ✓</button></div>
+</form></section>
+{% endblock %}{% block scripts %}<script>
+const steps=[...document.querySelectorAll('.wizard-step')], next=document.getElementById('nextBtn'),prev=document.getElementById('prevBtn'),finish=document.getElementById('finishBtn'),bar=document.getElementById('progressBar'),copy=document.getElementById('progressText');let idx=0;
+function render(){steps.forEach((s,i)=>s.classList.toggle('active',i===idx));prev.style.visibility=idx===0?'hidden':'visible';next.hidden=idx===steps.length-1;finish.hidden=idx!==steps.length-1;bar.style.width=((idx+1)/steps.length*100)+'%';copy.textContent=(idx+1)+' / '+steps.length;}
+next.onclick=()=>{if(idx<steps.length-1){idx++;render();document.querySelector('.meeting-shell').scrollIntoView({behavior:'smooth'})}};prev.onclick=()=>{if(idx>0){idx--;render();document.querySelector('.meeting-shell').scrollIntoView({behavior:'smooth'})}};render();
+
+(function(){
+  const companyId='{{ company.id }}';
+  const notes=document.getElementById('captureNotes');
+  const analyze=document.getElementById('analyzeNotes');
+  const results=document.getElementById('captureResults');
+  const list=document.getElementById('proposalList');
+  const empty=document.getElementById('proposalEmpty');
+  const count=document.getElementById('captureCount');
+
+  const keywordSets={
+    decision:['決定','確認先','先做','優先','同意','第一階段','會先','先從','decided','agreed','priority','first phase','will start'],
+    unknown:['待確認','還要確認','需要確認','不確定','不知道','尚未確認','unclear','need to confirm','unknown','tbd'],
+    pain:['慢','等','找不到','重複','手動','人工','麻煩','問題','出錯','延誤','卡住','電話','line','excel','紙本','依賴','瓶頸','manual','duplicate','bottleneck','delay','rework','call','cannot see','can\'t see'],
+    fact:['目前','現在','使用','都是','流程是','會用','由','負責','currently','today','uses','use ','tracked','calculated','handled by']
+  };
+  const moduleSignals=[
+    {no:4,name:'AI Quoting',zh:'AI 報價',keys:['報價','價格','單價','成本','quote','pricing','price','margin']},
+    {no:5,name:'Work Order & Production',zh:'工單／生產管理',keys:['工單','生產','製程','進度','機台','站別','work order','production','workflow','status','factory']},
+    {no:6,name:'AI Analytics',zh:'AI 數據分析',keys:['報表','毛利','營收','kpi','分析','數字','analytics','report','dashboard','metric','revenue']}
+  ];
+
+  function hasAny(text,keys){const t=text.toLowerCase();return keys.some(k=>t.includes(k.toLowerCase()));}
+  function cleanSentences(text){return text.replace(/\r/g,'\n').split(/[\n。！？!?；;]+/).map(x=>x.trim().replace(/^[-•*\d.、\s]+/,'' )).filter(x=>x.length>=4).slice(0,40);}
+  function uniq(items){const seen=new Set();return items.filter(x=>{const k=(x.kind+'|'+x.title).toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});}
+
+  function extract(text){
+    const proposals=[];
+    cleanSentences(text).forEach(s=>{
+      const lower=s.toLowerCase();
+      if(hasAny(lower,keywordSets.unknown)) proposals.push({kind:'unknown',title:s,confidence:'High',details:'Unresolved item detected in meeting notes.'});
+      else if(hasAny(lower,keywordSets.decision)) proposals.push({kind:'decision',title:s,confidence:'High',details:'Possible explicit decision / priority statement.'});
+      else if(hasAny(lower,keywordSets.pain)) proposals.push({kind:'pain',title:s,confidence:'Medium',details:'Possible operational pain or friction signal.'});
+      else if(hasAny(lower,keywordSets.fact)) proposals.push({kind:'fact',title:s,confidence:'Medium',details:'Possible reusable client fact.'});
+    });
+    const lower=text.toLowerCase();
+    moduleSignals.forEach(m=>{const hits=m.keys.filter(k=>lower.includes(k.toLowerCase())).length;if(hits){proposals.push({kind:'module',title:`Module signal: 0${m.no} ${m.name} / ${m.zh}`,confidence:hits>=2?'High':'Medium',details:`Detected ${hits} related signal${hits>1?'s':''} in the notes.`});}});
+    return uniq(proposals).slice(0,14);
+  }
+
+  function typeLabel(kind){return {fact:'Known Fact',pain:'Pain Point',unknown:'Unknown',decision:'Decision',module:'Module Signal'}[kind]||kind;}
+  function typeClass(kind){return {fact:'fact',pain:'pain',unknown:'unknown',decision:'decision',module:'module'}[kind]||'';}
+
+  async function saveProposal(card,p){
+    let url='', body=new URLSearchParams();
+    if(p.kind==='pain'){
+      url=`/companies/${companyId}/pains`;
+      body.set('category','Meeting Capture'); body.set('description',p.title); body.set('severity',p.confidence==='High'?'High':'Medium'); body.set('customer_quote','');
+    }else if(p.kind==='decision'){
+      url=`/companies/${companyId}/decisions`;
+      body.set('title','Meeting decision'); body.set('decision',p.title); body.set('rationale',p.details||''); body.set('source','Meeting Capture'); body.set('status','Confirmed');
+    }else{
+      url=`/companies/${companyId}/memory`;
+      body.set('kind',p.kind==='unknown'?'unknown':'known');
+      body.set('title',p.title); body.set('details',p.details||''); body.set('source','Meeting Capture'); body.set('confidence',p.confidence||'Medium');
+    }
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()});
+    if(!res.ok) throw new Error('Save failed');
+    card.classList.add('saved');
+    card.querySelectorAll('button').forEach(b=>b.disabled=true);
+  }
+
+  function renderProposals(items){
+    list.innerHTML=''; results.hidden=false; empty.hidden=items.length>0; count.textContent=`${items.length} suggestion${items.length===1?'':'s'}`;
+    items.forEach(p=>{
+      const card=document.createElement('div'); card.className='proposal-card';
+      card.innerHTML=`<span class="proposal-type ${typeClass(p.kind)}">${typeLabel(p.kind)}</span><div class="proposal-main"><b></b><small></small></div><div class="proposal-actions"><button type="button" class="accept">Save</button><button type="button" class="reject">Ignore</button></div>`;
+      card.querySelector('.proposal-main b').textContent=p.title;
+      card.querySelector('.proposal-main small').textContent=`${p.confidence} confidence · ${p.details||''}`;
+      card.querySelector('.accept').onclick=async()=>{const btn=card.querySelector('.accept');btn.textContent='Saving…';try{await saveProposal(card,p);}catch(e){btn.textContent='Retry';alert('Could not save this suggestion. Please retry.');}};
+      card.querySelector('.reject').onclick=()=>{card.classList.add('rejected');card.querySelectorAll('button').forEach(b=>b.disabled=true);};
+      list.appendChild(card);
+    });
+  }
+
+  analyze.onclick=()=>{
+    const text=notes.value.trim();
+    if(!text){results.hidden=false;list.innerHTML='';empty.hidden=false;count.textContent='0 suggestions';return;}
+    renderProposals(extract(text));
+    results.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+})();
+</script>{% endblock %}

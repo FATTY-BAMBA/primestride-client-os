@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block title %}{{ company.name }} · PrimeStride Client OS{% endblock %}
+{% block content %}
+{% set contact = namespace(name='—') %}
+{% for e in company.timeline %}
+  {% if e.details and 'Primary contact:' in e.details %}
+    {% set contact.name = e.details|replace('Primary contact:', '')|trim %}
+  {% endif %}
+{% endfor %}
+{% set fit4 = company.module_fits|selectattr('module_no','equalto',4)|list %}
+{% set fit5 = company.module_fits|selectattr('module_no','equalto',5)|list %}
+{% set fit6 = company.module_fits|selectattr('module_no','equalto',6)|list %}
+{% set wants4 = fit4 and fit4[0].fit == 'High' %}
+{% set wants5 = fit5 and fit5[0].fit == 'High' %}
+{% set wants6 = fit6 and fit6[0].fit == 'High' %}
+
+<section class="company-head">
+  <a class="back" href="/">← Client Pipeline · 客戶管線</a>
+  <div class="eyebrow">CLIENT WORKSPACE · {{ company.industry or 'GENERAL' }}</div>
+  <h1>{{ company.name }}</h1>
+  <div class="head-tags">
+    <span class="stage-pill">{{ company.stage }}</span>
+    <span>Client Contact: {{ contact.name }}</span>
+    <span>PrimeStride Owner: {{ company.owner or 'Unassigned' }}</span>
+    <span>{{ company.fit_status or 'Unknown fit' }}</span>
+  </div>
+</section>
+
+<div class="layout"><div class="maincol">
+
+<section class="panel hero-panel">
+  <div>
+    <div class="panel-title"><div><span class="eyebrow">CLIENT JOURNEY</span><h2>Client Workspace · 客戶工作台</h2></div><span>v0.5 workflow</span></div>
+    <h3>{{ completion }}% Discovery Context Captured</h3>
+    <div class="bar large"><i style="width:{{ completion }}%"></i></div>
+    <p class="subtle">Known context stays with the account. Stage rules, evidence and decisions should tell us exactly what to do next.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="btn primary" href="/companies/{{ company.id }}/stage-intelligence">Stage Intelligence · 階段智慧</a>
+    <a class="btn secondary" href="/companies/{{ company.id }}/data-intake">Data Intake{% if files_received %} ({{ files_received }}){% endif %}</a>
+    <a class="btn secondary" href="/companies/{{ company.id }}/readiness-framework">Readiness</a>
+    <a class="btn secondary" href="/companies/{{ company.id }}/solution-blueprint">Solution Blueprint</a>
+    <a class="btn secondary" href="#memory">Client Memory</a>
+    <a class="btn secondary" href="#playbook">Meeting Playbook</a>
+  </div>
+</section>
+
+<section class="stage-mini">
+  <div><span>CURRENT STAGE</span><b>{{ company.stage }}</b></div>
+  <div><span>WAITING FOR</span><b>{{ stage_info.waiting_for }}</b></div>
+  <div><span>NEXT STAGE</span><b>{{ stage_info.next_stage or '—' }}</b></div>
+  <a class="btn secondary" href="/companies/{{ company.id }}/stage-intelligence">Why / What next →</a>
+</section>
+
+<section class="panel memory-panel" id="memory">
+  <div class="panel-title">
+    <div><span class="eyebrow">CLIENT MEMORY</span><h2>Never Ask Twice · 客戶永久脈絡</h2></div>
+    <span>Known → Unknown → Do Not Ask → Next Best Question</span>
+  </div>
+  <div class="memory-grid">
+    <div class="memory-column memory-known">
+      <div class="memory-column-head"><span>KNOWN</span><b>What we already know · 已知</b></div>
+      <div class="memory-items">
+        {% for item in memory.known %}<div class="memory-item"><b>✓ {{ item.title }}</b>{% if item.details %}<small>{{ item.details }}</small>{% endif %}{% if item.source %}<small>Source: {{ item.source }}</small>{% endif %}</div>{% endfor %}
+        {% if not memory.known %}<div class="memory-empty">No confirmed facts yet.</div>{% endif %}
+      </div>
+    </div>
+    <div class="memory-column memory-unknown">
+      <div class="memory-column-head"><span>UNKNOWN</span><b>What is still unclear · 待確認</b></div>
+      <div class="memory-items">
+        {% for item in memory.unknown %}<div class="memory-item"><b>? {{ item.title }}</b>{% if item.details %}<small>{{ item.details }}</small>{% endif %}</div>{% endfor %}
+        {% if not memory.unknown %}<div class="memory-empty">No open unknowns.</div>{% endif %}
+      </div>
+    </div>
+    <div class="memory-column memory-noask">
+      <div class="memory-column-head"><span>DO NOT ASK AGAIN</span><b>Already answered · 不要再問</b></div>
+      <div class="memory-items">
+        {% for item in memory.do_not_ask %}<div class="memory-item"><b>× {{ item.title }}</b>{% if item.details %}<small>{{ item.details }}</small>{% endif %}</div>{% endfor %}
+        {% if not memory.do_not_ask %}<div class="memory-empty">Nothing blocked from re-asking yet.</div>{% endif %}
+      </div>
+    </div>
+    <div class="memory-column memory-next">
+      <div class="memory-column-head"><span>NEXT BEST QUESTION</span><b>Ask only what moves us forward · 下一個最好問題</b></div>
+      <div class="memory-items">
+        {% for item in memory.next_question %}<div class="memory-item"><b>→ {{ item.title }}</b>{% if item.details %}<small>{{ item.details }}</small>{% endif %}</div>{% endfor %}
+        {% if not memory.next_question %}<div class="memory-empty">No next question yet.</div>{% endif %}
+      </div>
+    </div>
+  </div>
+  <details class="memory-add">
+    <summary>＋ Add a memory item · 新增客戶脈絡</summary>
+    <form class="grid-form memory-add-form" method="post" action="/companies/{{ company.id }}/memory">
+      <label>TYPE · 類型<select name="kind"><option value="known">Known · 已知</option><option value="unknown">Unknown · 待確認</option><option value="do_not_ask">Do Not Ask Again · 不要再問</option><option value="next_question">Next Best Question · 下一個問題</option></select></label>
+      <label>CONFIDENCE · 信心<select name="confidence"><option>High</option><option>Medium</option><option>Low</option></select></label>
+      <label class="wide">MEMORY · 脈絡<input name="title" placeholder="One clear fact, unknown, or question" required></label>
+      <label class="wide">DETAILS · 說明<textarea name="details" placeholder="Optional supporting context"></textarea></label>
+      <label>SOURCE · 來源<input name="source" placeholder="Meeting / Email / Data / Manual"></label>
+      <button>Save Memory · 儲存</button>
+    </form>
+  </details>
+</section>
+
+<section class="panel playbook-panel" id="playbook">
+  <div class="panel-title">
+    <div><span class="eyebrow">MEETING PLAYBOOK</span><h2>Next Meeting Intelligence · 下一次會議作戰卡</h2></div>
+    <span class="playbook-stage">{{ company.stage }}</span>
+  </div>
+
+  {% if company.stage == 'Data Requested' %}
+  <div class="playbook-callout">
+    <b>Current mode · 目前模式</b>
+    <p>Wait for the first sample-data upload. Do not send another broad questionnaire or repeat the introductory pitch.</p>
+    <small>目前先等第一批資料。不要再丟一份大問卷，也不要重講第一次簡報。</small>
+  </div>
+  {% elif company.stage in ['Data Received','Data Readiness','Client Blueprint'] %}
+  <div class="playbook-callout">
+    <b>Current mode · 目前模式</b>
+    <p>Lead with evidence from the client's own files. Show what is usable, what is missing, and what we recommend building first.</p>
+    <small>用客戶自己的資料開場，不再用泛用功能介紹。</small>
+  </div>
+  {% else %}
+  <div class="playbook-callout">
+    <b>Current mode · 目前模式</b>
+    <p>Use discovery to identify the most expensive operational pain, then narrow the conversation to the relevant modules.</p>
+    <small>先確認最痛的營運問題，再決定要講哪些模組。</small>
+  </div>
+  {% endif %}
+
+  <div class="playbook-grid">
+    <div class="playbook-card objective-card">
+      <span class="playbook-label">NEXT MEETING OBJECTIVE</span>
+      {% if company.stage == 'Data Requested' %}
+        <h3>Turn their files into a first operational diagnosis.</h3>
+        <p>After upload: understand Quote → Order → Work Order → Production → Management reporting using real evidence.</p>
+      {% elif company.stage in ['Data Received','Data Readiness'] %}
+        <h3>Validate the Data Readiness findings.</h3>
+        <p>Confirm our interpretation, close only critical gaps, and agree on the first buildable slice.</p>
+      {% elif company.stage == 'Client Blueprint' %}
+        <h3>Confirm the future-state solution blueprint.</h3>
+        <p>Align scope, workflow, responsibilities, success metrics and the first implementation phase.</p>
+      {% else %}
+        <h3>Confirm the operational problem before selling the solution.</h3>
+        <p>Capture current workflow, bottlenecks and measurable success criteria.</p>
+      {% endif %}
+    </div>
+
+    <div class="playbook-card">
+      <span class="playbook-label">FOCUS · 本次聚焦</span>
+      <div class="focus-chips">
+        {% if wants4 %}<span>04 · AI Quoting</span>{% endif %}
+        {% if wants5 %}<span>05 · Work Order & Production</span>{% endif %}
+        {% if wants6 %}<span>06 · AI Analytics</span>{% endif %}
+        {% if not wants4 and not wants5 and not wants6 %}<span>Confirm module priority</span>{% endif %}
+      </div>
+      <p class="playbook-note">Only discuss modules connected to confirmed pain. Do not walk through all six modules by default.</p>
+    </div>
+  </div>
+
+  <div class="playbook-columns">
+    <div class="playbook-section">
+      <div class="playbook-section-head"><span>ASK</span><b>Questions to answer · 要確認什麼</b></div>
+      <ul class="playbook-list">
+        {% if wants4 %}<li><b>Quoting:</b> Who calculates quotes today, what inputs matter, and where are exceptions approved?</li>{% endif %}
+        {% if wants5 %}<li><b>Production:</b> What happens after a quote is accepted, and how is each job's current stage tracked?</li>{% endif %}
+        {% if wants6 %}<li><b>Analytics:</b> Which management questions are hard to answer today, and what numbers do they trust?</li>{% endif %}
+        <li><b>Handoff:</b> Where is information re-entered, copied through LINE/Excel, or dependent on one person?</li>
+        <li><b>Success:</b> What would make the client say this project worked after 90 days?</li>
+      </ul>
+    </div>
+
+    <div class="playbook-section">
+      <div class="playbook-section-head"><span>LISTEN FOR</span><b>Evidence signals · 關鍵訊號</b></div>
+      <ul class="playbook-list signal-list">
+        <li>Duplicate entry / 重複輸入</li>
+        <li>Owner or senior-staff dependency / 關鍵人依賴</li>
+        <li>Excel + LINE + paper handoffs / 資料散落</li>
+        <li>Unclear work-order status / 工單狀態不透明</li>
+        <li>Special pricing exceptions / 特殊報價規則</li>
+        <li>Reports built manually / 報表靠人工整理</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="playbook-columns pitch-columns">
+    <div class="playbook-section show-section">
+      <div class="playbook-section-head"><span>SHOW</span><b>Recommended pitch path · 建議簡報路徑</b></div>
+      <ol class="pitch-path">
+        <li><span>01</span><div><b>Reconfirm the client's own pain</b><small>One sentence only. Do not restart from the cover slide.</small></div></li>
+        {% if wants4 %}<li><span>02</span><div><b>AI Quoting</b><small>Show how their historical prices, specifications and rules become an explainable quote recommendation.</small></div></li>{% endif %}
+        {% if wants5 %}<li><span>03</span><div><b>Work Order future-state flow</b><small>Quote → Order → Work Order → Stage → Status. Tailor this visual after their data arrives.</small></div></li>{% endif %}
+        {% if wants6 %}<li><span>04</span><div><b>Management Analytics example</b><small>Show the questions management will be able to ask from structured quote + production events.</small></div></li>{% endif %}
+        <li><span>05</span><div><b>Implementation simplicity</b><small>Existing files first; PrimeStride does the mapping and cleanup.</small></div></li>
+        <li><span>06</span><div><b>Concrete next step</b><small>End with one action, not another broad sales discussion.</small></div></li>
+      </ol>
+    </div>
+
+    <div class="playbook-section skip-section">
+      <div class="playbook-section-head"><span>SKIP</span><b>Do not lead with · 不要主動重講</b></div>
+      <ul class="playbook-list">
+        <li>Generic six-module overview — they already expressed priorities.</li>
+        <li>AI Customer Service unless the client brings it back into scope.</li>
+        <li>Long technical architecture explanations.</li>
+        <li>Subsidy discussion unless it affects the decision being made.</li>
+        <li>Market comparison unless price benchmarking becomes an objection.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="coverage-row">
+    <div class="coverage-head"><span class="playbook-label">PRESENTATION COVERAGE</span><b>Pitch asset readiness · 簡報素材準備度</b></div>
+    <div class="coverage-items">
+      <div class="coverage-item strong"><span>04</span><div><b>AI Quoting</b><small>Strong · existing detailed pitch</small></div></div>
+      <div class="coverage-item needs"><span>05</span><div><b>Work Order & Production</b><small>Needs client-tailored future-state visual</small></div></div>
+      <div class="coverage-item needs"><span>06</span><div><b>AI Analytics</b><small>Needs client-tailored management example</small></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="intake">
+  <div class="panel-title"><div><span class="eyebrow">PRE-MEETING INTAKE</span><h2>會前快速了解</h2></div><span>約 3 分鐘訊號</span></div>
+  {% set i=company.intake %}
+  <form class="stack-form" method="post" action="/companies/{{ company.id }}/intake">
+    <div class="twocol"><label>TOP IMPROVEMENTS · 最想改善的事情<textarea name="top_improvements">{{ i.top_improvements if i else '' }}</textarea></label><label>PRIMARY PRIORITY · 只能先改善一件，會選什麼？<textarea name="primary_priority">{{ i.primary_priority if i else '' }}</textarea></label></div>
+    <div class="twocol"><label>CURRENT TOOLS · 目前工具<input name="current_tools" value="{{ i.current_tools if i else '' }}" placeholder="Excel / LINE / ERP / 紙本"></label><label>COMPANY SIZE · 公司人數<input name="company_size" value="{{ i.company_size if i else '' }}"></label></div>
+    <label>OWNER DEPENDENCY · 老闆最希望不用再親自處理的事<textarea name="owner_repetitive_task">{{ i.owner_repetitive_task if i else '' }}</textarea></label>
+    <button>Save Intake · 儲存會前資料</button>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel-title"><div><span class="eyebrow">ACCOUNT CONTROL</span><h2>客戶狀態</h2></div><span>Client Contact · PrimeStride Owner · Due · Next Action</span></div>
+  <form class="grid-form" method="post" action="/companies/{{ company.id }}/overview">
+    <label>STAGE · 階段<select name="stage">{% for s in stages %}<option {% if s==company.stage %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
+    <label>CLIENT CONTACT · 客戶窗口<input value="{{ contact.name }}" readonly></label>
+    <label>PRIMESTRIDE OWNER · 我方負責人<input name="owner" value="{{ company.owner or '' }}"></label>
+    <label class="wide">NEXT ACTION · 下一步<input name="next_action" value="{{ company.next_action or '' }}"></label>
+    <label>DUE DATE · 到期日<input type="date" name="due_date" value="{{ company.due_date or '' }}"></label>
+    <label>FIT · 適配度<select name="fit_status"><option>{{ company.fit_status or 'Unknown' }}</option><option>Strong Fit</option><option>Potential Fit</option><option>Not Yet</option><option>No Fit</option></select></label>
+    <button>Save · 儲存狀態</button>
+  </form>
+  <p class="gate-note">STAGE ENGINE · Use Stage Intelligence to see why the account is here and what evidence is required before advancing.</p>
+</section>
+
+<section class="panel" id="discovery">
+  <div class="panel-title"><div><span class="eyebrow">DISCOVERY RECORD</span><h2>探索紀錄</h2></div><span>知道過的事情，不再問第二次</span></div>
+  <div class="pain-list">{% for p in company.pains %}<div class="pain"><div class="rank">{{ p.rank }}</div><div><b>{{ p.category }}</b><p>{{ p.description }}</p>{% if p.customer_quote %}<blockquote>{{ p.customer_quote }}</blockquote>{% endif %}</div><span class="severity {{ p.severity|lower }}">{{ p.severity }}</span></div>{% endfor %}{% if not company.pains %}<div class="empty">TOP PAINS · 尚未確認 Top 3 pain points。請執行 Discovery Meeting。</div>{% endif %}</div>
+  {% set d=company.discovery %}{% if d %}<div class="discovery-grid"><div><span>CURRENT FLOW · 目前流程</span><p>{{ d.current_flow or '—' }}</p></div><div><span>BOTTLENECK · 最大瓶頸</span><p>{{ d.biggest_bottleneck or '—' }}</p></div><div><span>KEY PERSON · 關鍵人依賴</span><p>{{ d.key_person_dependency or '—' }}</p></div><div><span>SUCCESS · 成功定義</span><p>{{ d.success_definition or '—' }}</p></div></div>{% endif %}
+</section>
+
+<section class="panel" id="readiness">
+  <div class="panel-title"><div><span class="eyebrow">DATA READINESS</span><h2>Evidence Readiness · 資料健檢</h2></div><a href="/companies/{{ company.id }}/readiness-framework">Open Framework →</a></div>
+  <div class="readiness-grid">
+    {% for r in readiness_summaries %}
+    <div class="ready-card">
+      <div class="ready-top"><b>MODULE {{ r.module_no }}</b><span>{% if r.score is none %}—{% else %}{{ r.score|round|int }}%{% endif %}</span></div>
+      <h3>{{ r.name }}</h3>
+      <div class="bar"><i style="width:{{ r.review_progress }}%"></i></div>
+      <p>{% if r.score is none %}Awaiting evidence{% else %}{{ r.score_label }} · {{ r.review_progress|round|int }}% evidence reviewed{% endif %}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel" id="tasks">
+  <div class="panel-title"><div><span class="eyebrow">TASKS</span><h2>待辦與下一步</h2></div><span>每個機會都必須有具體行動</span></div>
+  {% for t in company.tasks %}<form class="task {% if t.done %}done{% endif %}" method="post" action="/tasks/{{ t.id }}/toggle"><button class="check">{% if t.done %}✓{% else %}○{% endif %}</button><div><b>{{ t.title }}</b><small>{{ t.owner or 'Unassigned · 未指定' }} · {{ t.due_date or 'No due date · 未設定日期' }}</small></div></form>{% endfor %}
+  <form class="mini-form compact" method="post" action="/companies/{{ company.id }}/tasks"><input name="title" placeholder="Next Action · 下一個具體行動" required><input name="owner" placeholder="Assignee · 執行人"><input type="date" name="due_date"><button>+ Task</button></form>
+</section>
+
+</div><aside class="sidecol"><section class="panel sticky">
+  <div class="panel-title"><div><span class="eyebrow">RELATIONSHIP</span><h2>關係角色</h2></div></div>
+  <div class="module-row"><span>Client Contact · 客戶窗口</span><b>{{ contact.name }}</b></div>
+  <div class="module-row"><span>PrimeStride Owner · 我方負責人</span><b>{{ company.owner or '—' }}</b></div>
+  <div class="module-row"><span>Decision Maker · 客戶決策者</span><b>Unknown · 待確認</b></div>
+  <div class="divider"></div>
+  <div class="panel-title"><div><span class="eyebrow">PROJECT CONTROL</span><h2>專案控制</h2></div></div>
+  <div class="module-row"><span>Files registered</span><b>{{ files_received }}</b></div>
+  <div class="module-row"><span>Decision records</span><b>{{ decision_count }}</b></div>
+  <div class="module-row"><span>Next stage</span><b>{{ stage_info.next_stage or '—' }}</b></div>
+  <div class="divider"></div>
+  <div class="panel-title"><div><span class="eyebrow">MODULE FIT</span><h2>模組適配度</h2></div></div>
+  {% for no,name in modules.items() %}{% set match = company.module_fits|selectattr('module_no','equalto',no)|list %}<div class="module-row"><span>{{ no }} · {{ name }}</span>{% if match %}<b class="fit {{ match[0].fit|lower }}">{{ match[0].fit }}</b>{% else %}<b class="fit low">—</b>{% endif %}</div>{% endfor %}
+  <div class="divider"></div>
+  <div class="panel-title"><div><span class="eyebrow">MEETINGS</span><h2>會議紀錄</h2></div></div>
+  {% for m in company.meetings[:4] %}<div class="meeting-mini"><b>{{ m.meeting_type }} · {{ m.completeness|round|int }}%</b><small>{{ m.completed_at.strftime('%Y-%m-%d %H:%M') }}</small></div>{% endfor %}
+  <div class="divider"></div>
+  <div class="panel-title"><div><span class="eyebrow">TIMELINE</span><h2>時間軸</h2></div></div>
+  {% for e in company.timeline[:8] %}<div class="timeline"><i></i><div><b>{{ e.title }}</b><small>{{ e.created_at.strftime('%Y-%m-%d %H:%M') }}</small>{% if e.details %}<p>{{ e.details }}</p>{% endif %}</div></div>{% endfor %}
+</section></aside></div>
+{% endblock %}

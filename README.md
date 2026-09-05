@@ -1,77 +1,50 @@
-# PrimeStride Client OS v0.1
+# PrimeStride Client OS v0.2
 
-A working internal MVP for PrimeStride's Client Intelligence / Sales Operating System.
+Internal Client Intelligence / Sales Operating System for PrimeStride AI.
 
-## What is in v0.1
+## v0.2 focus — guided discovery workflow
 
-- Pipeline board with persistent company records
-- Company stage, owner, next action, due date, fit status
-- Discovery record: current flow, bottleneck, key-person dependency, existing systems, baseline, success definition, customer exact words
-- Ranked pain points
-- Module-fit record
-- Data-readiness scores by module
-- Tasks with owner/due date/completion
-- Timeline of stage/readiness/discovery events
-- Demo client preloaded for ④ AI 報價 + ⑤ 工單 + ⑥ AI 數據分析
-- SQLite by default for zero-friction local use
-- PostgreSQL-ready through `DATABASE_URL`
-- Docker Compose with PostgreSQL for a more production-like setup
+A salesperson can now move a company from `Meeting Booked` through a structured Discovery Meeting without leaving Client OS.
 
-## Run immediately
+### Included
+- Pipeline and permanent company record
+- Pre-meeting intake
+- Guided 8-step Discovery Meeting
+- Structured workflow, bottleneck, key-person dependency, quoting, production and management-metric capture
+- Customer exact words
+- Top 3 pain points
+- Module fit ①–⑥
+- Discovery completeness score
+- Definition-of-Done gate before `Diagnosis Confirmed`
+- Required next action + owner + due date
+- Meeting history + timeline
+- Deterministic post-meeting follow-up draft (AI refinement comes later)
+- Existing Data Readiness / task placeholders retained
 
+## Definition of Done for Diagnosis Confirmed
+- Discovery completeness >= 75%
+- Biggest bottleneck captured
+- At least one module marked `High` fit
+- Next action captured
+
+## Run locally
 ```bash
 python -m venv .venv
-source .venv/bin/activate     # Windows: .venv\\Scripts\\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
+Open http://127.0.0.1:8000
 
-Open: http://127.0.0.1:8000
+## Deployment
+GitHub is the source of truth and Vercel should deploy from `main` after PR merge.
 
-A demo company is automatically created the first time the app runs.
+For production/persistent usage set `DATABASE_URL` to PostgreSQL. SQLite is only for local/demo use.
 
-## Run with Docker + PostgreSQL
+## Safety / data hygiene
+Never commit API keys, database credentials, real client uploads, or confidential customer data.
 
-```bash
-docker compose up --build
-```
-
-Open: http://127.0.0.1:8000
-
-## Deployment direction
-
-- GitHub is the source of truth.
-- Vercel should deploy from this repository.
-- Production data should use PostgreSQL, not SQLite.
-- Never commit API keys, database credentials, client uploads, or confidential customer data.
-
-## Next build increments
-
-### v0.2 — Meeting workflow
-- Pre-meeting intake
-- Meeting/discovery run sheet
-- Meeting records
-- AI-assisted meeting summary (human confirm/edit)
-- Definition-of-Done gates before stage movement
-
-### v0.3 — Data request + files
-- Personalized data request generated from module fit
-- Secure file upload
-- File inventory per client
-- Data-request status
-
-### v0.4 — Data Readiness Engine
-- File classification
-- Field detection/mapping
-- Completeness/consistency/depth scoring
-- What to ask for next / what NOT to ask for
-
-### v0.5 — Client Blueprint
-- Current-state workflow
-- Proposed future workflow
-- Recommended phases
-- Auto-drafted follow-up / blueprint presentation
-
-## Architecture direction
-
-v0.1 is a modular monolith. Do not split into microservices yet. Preserve domain boundaries so Client Intelligence, Data Intake, Quoting, Production, Analytics and AI can be extracted later if needed.
+## Next
+- v0.3 Data Request + secure file upload
+- v0.4 Data Readiness Engine
+- v0.5 Client Blueprint generation

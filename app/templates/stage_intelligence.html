@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Stage Intelligence · {{ company.name }} · PrimeStride Client OS{% endblock %}
+{% block content %}
+<section class="company-head v05-head">
+  <a class="back" href="/companies/{{ company.id }}">← Client Workspace · 客戶工作台</a>
+  <div class="eyebrow">STAGE INTELLIGENCE · 階段智慧</div>
+  <h1>{{ company.name }}</h1>
+  <div class="head-tags">
+    <span class="stage-pill">{{ company.stage }}</span>
+    <span>Next: {{ stage_info.next_stage or '—' }}</span>
+    <span>{% if stage_info.ready_to_advance %}Ready to advance{% else %}In progress{% endif %}</span>
+  </div>
+</section>
+
+<div class="v05-page">
+  <section class="stage-hero {% if stage_info.ready_to_advance %}ready{% endif %}">
+    <div>
+      <span class="eyebrow">CURRENT STAGE</span>
+      <h2>{{ company.stage }}</h2>
+      <p>{{ stage_info.purpose }}</p>
+      <small>{{ stage_info.purpose_zh }}</small>
+    </div>
+    <div class="stage-next-box">
+      <span>WAITING FOR · 正在等待</span>
+      <b>{{ stage_info.waiting_for }}</b>
+      <small>{{ stage_info.waiting_for_zh }}</small>
+    </div>
+    <div class="stage-next-box">
+      <span>NEXT STAGE · 下一階段</span>
+      <b>{{ stage_info.next_stage or '—' }}</b>
+      <small>{{ stage_info.next_stage_zh or '' }}</small>
+    </div>
+  </section>
+
+  <div class="v05-two-col">
+    <section class="panel">
+      <div class="panel-title"><div><span class="eyebrow">WHY WE ARE HERE</span><h2>Stage Evidence · 為什麼在這一階段</h2></div><span>{{ stage_info.done_count }}/{{ stage_info.total_count }} satisfied</span></div>
+      <div class="stage-check-list">
+        {% for item in stage_info.why_here %}
+        <div class="stage-check {% if item.done %}done{% endif %}">
+          <span>{% if item.done %}✓{% else %}○{% endif %}</span>
+          <div><b>{{ item.label }}</b><small>{{ item.zh }}</small></div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><div><span class="eyebrow">EXIT CONDITIONS</span><h2>Definition of Done · 離開本階段的條件</h2></div></div>
+      <div class="stage-check-list">
+        {% for item in stage_info.exit_conditions %}
+        <div class="stage-check {% if item.done %}done{% endif %}">
+          <span>{% if item.done %}✓{% else %}○{% endif %}</span>
+          <div><b>{{ item.label }}</b><small>{{ item.zh }}</small></div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if stage_info.ready_to_advance %}
+      <div class="stage-ready-callout"><b>Ready for the next stage.</b><small>目前證據已滿足離開本階段的條件。仍由 PrimeStride 人員確認後再移動階段。</small></div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="v05-two-col">
+    <section class="panel do-not-panel">
+      <div class="panel-title"><div><span class="eyebrow">DO NOT DO</span><h2>Protect the Client Experience · 不要做什麼</h2></div></div>
+      <ul class="v05-list danger-list">
+        {% for item in stage_info.do_not %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><div><span class="eyebrow">SYSTEM ACTIONS</span><h2>What Client OS Should Do · 系統下一步</h2></div></div>
+      <ol class="v05-action-list">
+        {% for item in stage_info.system_actions %}<li><span>{{ '%02d'|format(loop.index) }}</span><div>{{ item }}</div></li>{% endfor %}
+      </ol>
+    </section>
+  </div>
+
+  <section class="panel client-experience-card">
+    <div class="panel-title"><div><span class="eyebrow">CLIENT EXPERIENCE</span><h2>What the client should feel · 客戶應該感受到什麼</h2></div></div>
+    <blockquote>{{ stage_info.client_experience }}</blockquote>
+    <p>{{ stage_info.client_experience_zh }}</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title"><div><span class="eyebrow">CONNECTED WORKSPACES</span><h2>Continue the work · 接著做</h2></div></div>
+    <div class="v05-link-grid">
+      <a href="/companies/{{ company.id }}/data-intake"><b>Data Intake</b><small>資料匯入與檔案盤點</small></a>
+      <a href="/companies/{{ company.id }}/readiness-framework"><b>Readiness Framework</b><small>證據式資料準備度</small></a>
+      <a href="/companies/{{ company.id }}/solution-blueprint"><b>Solution Blueprint</b><small>從已知證據產生方案藍圖</small></a>
+      <a href="/companies/{{ company.id }}#playbook"><b>Meeting Playbook</b><small>下一次會議問什麼、講什麼</small></a>
+    </div>
+  </section>
+</div>
+{% endblock %}
