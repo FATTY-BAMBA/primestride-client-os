@@ -1,10 +1,10 @@
-# PrimeStride Client OS Architecture v1.2
+# PrimeStride Client OS Architecture v1.3
 
 ## Goal
 
 Stabilize the proven v1.1 behavior before adding more product capability. Preserve Source-First Intake, private original retention, SourceReference lineage, IngestionJob history/retry, source lifecycle isolation, human review, and evidence-based readiness while removing release-by-release bootstrap sprawl.
 
-## What changed in v1.2.0
+## v1.2 foundation
 
 ### Central runtime registry
 
@@ -14,20 +14,34 @@ Stabilize the proven v1.1 behavior before adding more product capability. Preser
 
 `app/static/v07.js` became a stable intake bootstrap with one ordered module registry and one sequential loader. Existing versioned modules remain for compatibility, but future consolidation can happen behind this entrypoint without changing the template or creating another promise-chain wrapper.
 
-## What changed in v1.2.1
-
 ### Explicit application factory
 
-`app/main.py` now exposes `create_app()` and builds the FastAPI application explicitly. `install_platform_extensions(application)` is called directly before legacy prototype routes are declared, preserving the validated route-shadowing order without modifying the FastAPI constructor.
+`app/main.py` exposes `create_app()` and builds the FastAPI application explicitly. `install_platform_extensions(application)` is called directly before legacy prototype routes are declared, preserving the validated route-shadowing order without modifying the FastAPI constructor.
 
-`db.py` now owns database configuration and session/schema helpers only. The temporary FastAPI monkeypatch / compatibility bridge has been deleted completely.
+`db.py` owns database configuration and session/schema helpers only. The temporary FastAPI monkeypatch / compatibility bridge has been deleted completely.
 
-`/api/platform/status` now reports:
+## v1.3 Phase 3 domain migration
 
-- `bootstrap: explicit-application-factory`
-- `compatibility_bridge: none`
+### v1.3.0 — lineage, jobs, readiness
 
-The public FastAPI application version and `/health` version are both sourced from `PLATFORM_VERSION`, removing the old `0.5.0` application-version drift.
+Production wiring moved to stable packages:
+
+- `app/lineage/` — SourceReference schema, provenance services, lineage HTTP routes
+- `app/jobs/` — IngestionJob recovery/retry services and routes
+- `app/readiness/` — lifecycle-safe readiness projection and HTTP routes
+
+Former `v110_lineage.py`, `v112_jobs.py`, and `v1111_readiness_fix.py` modules remain thin compatibility adapters only.
+
+### v1.3.1 — lifecycle and intake workflow
+
+Production wiring now also uses:
+
+- `app/lifecycle/` — ACTIVE / TEST / ARCHIVED schema, evidence filtering, stage reconciliation, source lifecycle routes, lifecycle-safe account projection
+- `app/intake/` — Source-First registration, lineage-preserving inspection saves, lifecycle-aware Data Intake view, and the human review gate
+
+Former `v111_lifecycle.py`, `v101_runtime.py`, and `v110_review.py` modules are compatibility adapters. Production routing no longer depends on them.
+
+The jobs and readiness domains now import lifecycle behavior from `app.lifecycle`, eliminating another release-numbered dependency edge.
 
 ## Required invariants
 
@@ -40,26 +54,25 @@ The public FastAPI application version and `/health` version are both sourced fr
 7. Readiness ranges are deterministic and evidence-based.
 8. Existing v1.1 URLs and behavior remain backward compatible during consolidation.
 
-## Next cleanup steps
+## Remaining cleanup
 
-### Phase 3 — domain routers/services
+### Storage domain
 
-Move routes and business logic into stable modules:
+Move private object storage, Source Vault retention, presigned-open behavior, and tenant key handling behind `storage/`. Retire `v100_storage.py` / `v101_storage.py` only after Source-First parity passes.
 
-- `intake/` — source-first orchestration, deterministic inspection, review lifecycle
-- `storage/` — private object storage and source retention
-- `lineage/` — SourceReference and provenance queries
-- `jobs/` — IngestionJob lifecycle, recovery and retry
-- `readiness/` — evidence projection, scoring ranges, next-gap intelligence
-- `ai/` — multimodal extraction and AI gateway interaction
+### Deterministic intake domain
 
-Start with additive stable routers/services while keeping versioned modules as compatibility adapters. Retire each versioned module only after route and end-to-end parity checks pass.
+Move table-region detection, canonical mapping, correction lifecycle helpers, and readiness-range helpers out of `v082_runtime.py` / `v082_perf.py` into stable intake/readiness services.
 
-### Phase 4 — frontend consolidation
+### AI domain
 
-Merge the stable intake behavior into a small number of domain modules behind the existing bootstrap. Remove DOM monkeypatch layers only after end-to-end parity for structured intake, multimodal intake, lifecycle isolation and job recovery.
+Move multimodal provider interaction, section-aware mapping, background polling, and result validation into a stable `ai/` package. Versioned AI modules become compatibility adapters after parity tests.
 
-### Phase 5 — formal migrations
+### Frontend consolidation
+
+Merge stable intake behavior into a small number of domain modules behind the existing bootstrap. Remove DOM monkeypatch layers only after end-to-end parity for structured intake, multimodal intake, lifecycle isolation and job recovery.
+
+### Formal migrations
 
 Move first-class lineage/lifecycle tables from runtime `create_all(checkfirst=True)` provisioning to explicit Alembic migrations. Remove legacy Source Vault manifest dependency only after all active production rows have durable relational equivalents.
 
