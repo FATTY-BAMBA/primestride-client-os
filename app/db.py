@@ -96,6 +96,7 @@ def _install_primestride_bootstrap_hook() -> None:
         def wrapped_init(self, *args, **kwargs):
             original_init(self, *args, **kwargs)
             from .v110_lineage import install_v110_lineage
+            from .v112_jobs import install_v112_jobs
             from .v1111_readiness_fix import install_v1111_readiness_fix
             from .v111_lifecycle import install_v111_lifecycle
             from .v110_review import install_v110_review
@@ -109,10 +110,10 @@ def _install_primestride_bootstrap_hook() -> None:
             from .v091_ai import install_v091_ai
             from .v09_ai import install_v09_ai
 
-            # First-class provenance + lifecycle must register before legacy
-            # account/intake/readiness routes so active/test/archive state is the
-            # source of truth for operational counts and readiness.
+            # First-class provenance + job recovery + lifecycle must register
+            # before legacy account/intake/readiness routes.
             install_v110_lineage(self)
+            install_v112_jobs(self)
             # The hotfix composes lifecycle filtering with the v0.8.5 honest
             # readiness-range summary shape expected by readiness_framework.html.
             install_v1111_readiness_fix(self)
