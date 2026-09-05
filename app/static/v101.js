@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = '1.0.1';
+  const VERSION = '1.0.2';
   const panel = document.getElementById('source-vault-panel');
   const lab = document.getElementById('ingestion-lab');
   if (!panel || !lab) return;
@@ -11,8 +11,8 @@
   const status = panel.querySelector('#sv-status');
   if (!fileInput || !category || !oldButton || !status) return;
 
-  // v1.0's button already owns a storage-only listener. Clone it so v1.0.1 can
-  // replace that split workflow with one source-first action without double upload.
+  // v1.0's button already owns a storage-only listener. Clone it so v1.0.2 can
+  // keep the source-first action without double upload.
   const button = oldButton.cloneNode(true);
   oldButton.replaceWith(button);
   button.id = 'sv-upload';
@@ -154,8 +154,8 @@
     }
   });
 
-  // Legacy direct drop zones remain available for debugging, but clarify that the
-  // source-first door above is the normal production workflow.
+  // Legacy direct drop zones remain available for debugging, but the source-first
+  // door above is the normal production workflow.
   const directStructured = document.querySelector('#ingestion-lab .ingestion-drop');
   if (directStructured) directStructured.title = 'Advanced/direct inspection. Prefer Source-First Intake for real client files.';
   const directAI = document.querySelector('#ai09-drop');
