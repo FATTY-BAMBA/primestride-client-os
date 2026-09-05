@@ -140,6 +140,18 @@
       if (!res.ok) throw new Error((data.error || 'Source Vault upload failed.') + (data.detail ? ` · ${data.detail}` : ''));
 
       await refreshVault();
+      // Pass the immutable source identity forward so the analysis job can be
+      // linked even when the browser compresses an image before AI processing.
+      window.__PS_SOURCE_FIRST_CONTEXT = {
+        companyId: String(companyId),
+        filename: file.name,
+        source_id: data.file?.source_id || null,
+        sha256: data.file?.sha256 || null,
+        intake_file_id: data.file?.file_id || null,
+        created_at: Date.now(),
+      };
+      try { sessionStorage.setItem(`ps_source_first_${companyId}`, JSON.stringify(window.__PS_SOURCE_FIRST_CONTEXT)); } catch (_) {}
+
       const route = routeToAnalysis(file);
       const path = data.file?.tenant_key ? ` · ${data.file.tenant_key}` : '';
       if (route === 'deterministic') {
