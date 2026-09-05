@@ -1,83 +1,17 @@
-"""PrimeStride Client OS v1.1.1.3 readiness consistency + empty-state UX.
+"""Compatibility adapter for the former v1.1.1.3 readiness route.
 
-Composes three behaviors on the Readiness page:
-- lifecycle-filtered ACTIVE evidence only
-- v0.8.5 honest readiness-range summaries
-- lifecycle-aware stage/gap gating when no real source is active
-
-When every current file is TEST/ARCHIVED, the account returns to Data Requested,
-the readiness page does not manufacture a specific "ask next" list from zero
-reviewed evidence, and the template presents an intentional waiting state rather
-than a fully expanded empty assessment.
+Production wiring moved to ``app.readiness`` in v1.3. The old installer name is
+kept so any external or historical imports remain valid during consolidation.
 """
-from __future__ import annotations
-
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-
-from .db import SessionLocal
-from .models import TimelineEvent
-from .v111_lifecycle import (
-    _CompanyView,
-    _reconcile_stage,
-    active_intake_files,
-    effective_readiness_evidence,
-    ensure_lifecycle_rows,
-)
+from .readiness.router import install_readiness_routes
+from .readiness.service import build_readiness_projection
 
 VERSION = "1.1.1.3"
 
 
-def install_v1111_readiness_fix(app: FastAPI) -> None:
-    if getattr(app.state, "ps_v1111_readiness_fix_installed", False):
-        return
-    app.state.ps_v1111_readiness_fix_installed = True
+def install_v1111_readiness_fix(app):
+    """Backward-compatible installer alias."""
+    return install_readiness_routes(app)
 
-    @app.get("/companies/{company_id}/readiness-framework", response_class=HTMLResponse, include_in_schema=False)
-    def readiness_lifecycle_honest_range(company_id: int, request: Request):
-        from . import main as m
-        from .v082_perf import _gap_intelligence, _honest_summaries
 
-        db = SessionLocal()
-        try:
-            c = db.scalar(m.company_stmt(company_id))
-            if not c:
-                return HTMLResponse("Company not found", 404)
-
-            m.ensure_v04_memory(db, c)
-            ensure_lifecycle_rows(db, company_id)
-
-            # Keep the account stage truthful even when the operator lands on
-            # Readiness directly instead of visiting Data Intake first.
-            old_stage = c.stage
-            if _reconcile_stage(db, c, list(c.intake_files)):
-                db.add(TimelineEvent(
-                    company_id=c.id,
-                    event_type="Stage Reconcile",
-                    title=f"Lifecycle-aware readiness stage reconciled to {c.stage}",
-                    details=f"v{VERSION} active-source gate" + (f" · {old_stage} → {c.stage}" if old_stage != c.stage else ""),
-                ))
-            db.commit()
-
-            c = db.scalar(m.company_stmt(company_id))
-            active = active_intake_files(db, company_id, list(c.intake_files))
-            evidence = effective_readiness_evidence(c, db)
-            view = _CompanyView(c, intake_files=active, readiness_evidence=evidence)
-
-            summaries = _honest_summaries(m, view)
-            # With zero ACTIVE sources there is no evidence-informed gap ranking
-            # yet. Asking for KPI definitions or quote history at this point would
-            # recreate the broad-homework behavior Source-First Intake was built
-            # to avoid.
-            gap_intelligence = _gap_intelligence(summaries) if active else None
-
-            return m.render(request, "readiness_framework.html", {
-                "company": c,
-                "summaries": summaries,
-                "files_received": len(active),
-                "status_options": m.READINESS_STATUS_OPTIONS,
-                "gap_intelligence": gap_intelligence,
-                "readiness_version": VERSION,
-            })
-        finally:
-            db.close()
+__all__ = ["VERSION", "build_readiness_projection", "install_v1111_readiness_fix"]
