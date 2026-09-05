@@ -8,6 +8,8 @@ from urllib.request import Request as UrlRequest
 
 from sqlalchemy import func, insert, select, update
 
+from ..lifecycle.schema import intake_source_lifecycle
+from ..lifecycle.service import ensure_lifecycle_rows
 from ..lineage.schema import ingestion_jobs, source_references
 from ..lineage.service import ensure_lineage_schema, update_ingestion_job
 from ..v09_ai import (
@@ -22,9 +24,8 @@ from ..v09_ai import (
 from ..v092_ai import OUTPUT_SCHEMA_092, _prompt_092, _validated_result_092
 from ..v093_ai import _RESPONSE_ID_RE, _provider_json
 from ..v100_storage import BUCKET, _s3_client
-from ..v111_lifecycle import ensure_lifecycle_rows, intake_source_lifecycle
 
-DOMAIN_VERSION = "1.3.0"
+DOMAIN_VERSION = "1.3.1"
 RETRYABLE_STATUSES = {"failed", "cancelled", "incomplete"}
 RECOVERABLE_STATUSES = {"queued", "processing"}
 
