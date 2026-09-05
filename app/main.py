@@ -15,6 +15,7 @@ from .models import (
     Task, Readiness, TimelineEvent, ClientMemory, IntakeFile,
     ReadinessEvidence, DecisionLog, PIPELINE_STAGES,
 )
+from .platform_bootstrap import PLATFORM_VERSION, install_platform_extensions
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -152,9 +153,21 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="PrimeStride Client OS", version="0.5.0", lifespan=lifespan)
-app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+
+def create_app() -> FastAPI:
+    """Build the Client OS explicitly; no FastAPI constructor monkeypatching."""
+    application = FastAPI(title="PrimeStride Client OS", version=PLATFORM_VERSION, lifespan=lifespan)
+    # Install extension routes before legacy prototype routes so the validated
+    # shadow/precedence behavior remains unchanged during consolidation.
+    install_platform_extensions(application)
+    application.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+    application.state.ps_app_factory = True
+    return application
+
+
+app = create_app()
 
 
 def company_stmt(company_id: int):
@@ -472,7 +485,7 @@ def _stage_info(stage, purpose, purpose_zh, waiting_for, waiting_for_zh, next_st
 @app.get("/health")
 def health():
     db_kind = "postgresql" if DATABASE_URL.startswith("postgres") else "sqlite-demo"
-    return {"status": "ok", "service": "PrimeStride Client OS", "version": "0.5.0", "database": db_kind}
+    return {"status": "ok", "service": "PrimeStride Client OS", "version": PLATFORM_VERSION, "database": db_kind}
 
 
 @app.get("/", response_class=HTMLResponse)
