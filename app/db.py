@@ -96,6 +96,7 @@ def _install_primestride_bootstrap_hook() -> None:
         def wrapped_init(self, *args, **kwargs):
             original_init(self, *args, **kwargs)
             from .v110_lineage import install_v110_lineage
+            from .v1111_readiness_fix import install_v1111_readiness_fix
             from .v111_lifecycle import install_v111_lifecycle
             from .v110_review import install_v110_review
             from .v101_runtime import install_v101_runtime
@@ -112,6 +113,9 @@ def _install_primestride_bootstrap_hook() -> None:
             # account/intake/readiness routes so active/test/archive state is the
             # source of truth for operational counts and readiness.
             install_v110_lineage(self)
+            # The hotfix composes lifecycle filtering with the v0.8.5 honest
+            # readiness-range summary shape expected by readiness_framework.html.
+            install_v1111_readiness_fix(self)
             install_v111_lifecycle(self)
             # Review override must register before the legacy v0.8 route.
             install_v110_review(self)
