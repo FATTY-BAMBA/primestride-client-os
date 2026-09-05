@@ -3,8 +3,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 
 from ..db import SessionLocal
+from ..lifecycle.service import ensure_lifecycle_rows, reconcile_stage
 from ..models import TimelineEvent
-from ..v111_lifecycle import _reconcile_stage, ensure_lifecycle_rows
 from .service import DOMAIN_VERSION, build_readiness_projection
 
 
@@ -29,12 +29,14 @@ def install_readiness_routes(app: FastAPI) -> None:
             ensure_lifecycle_rows(db, company_id)
 
             old_stage = company.stage
-            if _reconcile_stage(db, company, list(company.intake_files)):
+            if reconcile_stage(db, company, list(company.intake_files)):
                 db.add(TimelineEvent(
                     company_id=company.id,
                     event_type="Stage Reconcile",
                     title=f"Lifecycle-aware readiness stage reconciled to {company.stage}",
-                    details=f"v{DOMAIN_VERSION} active-source gate" + (f" · {old_stage} → {company.stage}" if old_stage != company.stage else ""),
+                    details=f"v{DOMAIN_VERSION} active-source gate" + (
+                        f" · {old_stage} → {company.stage}" if old_stage != company.stage else ""
+                    ),
                 ))
             db.commit()
 
