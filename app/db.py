@@ -97,6 +97,7 @@ def _install_primestride_bootstrap_hook() -> None:
             original_init(self, *args, **kwargs)
             from .v082_runtime import install_v082
             from .v082_perf import install_v082_perf
+            from .v100_storage import install_v100_storage
             from .v093_ai import install_v093_ai
             from .v092_ai import install_v092_ai
             from .v091_ai import install_v091_ai
@@ -104,6 +105,7 @@ def _install_primestride_bootstrap_hook() -> None:
 
             install_v082(self)
             install_v082_perf(self)
+            install_v100_storage(self)
             # Background start/poll routes are additive; newest synchronous AI
             # route remains first for compatibility with older clients.
             install_v093_ai(self)
