@@ -1,15 +1,14 @@
 """PrimeStride Client OS platform bootstrap.
 
-Architecture consolidation entrypoint for the previously version-stacked runtime.
+Central runtime registry for the previously version-stacked implementation.
 
-All production extensions are installed from one explicit registry in a fixed
-order.  The current app still reaches this function through a small compatibility
-bridge in db.py because app/main.py creates the FastAPI object directly during
-module import.  That bridge is intentionally temporary; the next cleanup step is
-moving app creation into an application factory and deleting the bridge entirely.
+app/main.py now owns an explicit create_app() application factory. The factory
+installs this registry before the legacy prototype routes are declared, preserving
+the route precedence validated through v1.1 without monkeypatching FastAPI or
+coupling application wiring to database infrastructure.
 
-Keeping the registry here makes route precedence visible, testable and auditable
-without scattering imports across database infrastructure.
+The versioned implementation modules remain temporarily for compatibility while
+we consolidate them into domain routers/services behind this stable registry.
 """
 from __future__ import annotations
 
@@ -18,7 +17,7 @@ from typing import Callable
 
 from fastapi import FastAPI
 
-PLATFORM_VERSION = "1.2.0"
+PLATFORM_VERSION = "1.2.1"
 
 # Order is behavioral: several newer routes intentionally shadow prototype
 # routes, and Starlette resolves the first matching route.
@@ -66,7 +65,7 @@ def install_platform_extensions(app: FastAPI) -> None:
         return {
             "ok": True,
             "version": PLATFORM_VERSION,
-            "bootstrap": "centralized-registry",
+            "bootstrap": "explicit-application-factory",
             "components": list(installed),
-            "compatibility_bridge": "db.py -> platform_bootstrap (temporary)",
+            "compatibility_bridge": "none",
         }
