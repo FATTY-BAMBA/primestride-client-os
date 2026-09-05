@@ -215,17 +215,17 @@ def install_v100_storage(app: FastAPI) -> None:
                     matching = row
                     break
 
+            # Keep object-store HTTP metadata ASCII-only for maximum S3/R2
+            # compatibility. Human-readable filenames live in the DB manifest.
             put_kwargs: dict[str, Any] = {
                 "Bucket": BUCKET,
                 "Key": object_key,
                 "Body": raw,
                 "ContentType": content_type,
-                "ContentDisposition": f'attachment; filename="{filename}"',
                 "Metadata": {
                     "company-id": str(company_id),
                     "source-id": source_id,
                     "sha256": sha256,
-                    "original-name": filename[:100],
                 },
             }
             if SSE:
