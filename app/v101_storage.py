@@ -4,6 +4,10 @@ Keeps immutable internal identity authoritative while making object keys easier
 for humans to inspect. Example: tenants/c0001-songyou/originals/2026/09/...
 Existing v1.0 objects remain valid at their historical keys; only new uploads use
 this path convention.
+
+v1.1 integration: every retained original is also written to the first-class
+source_references registry. The legacy manifest remains during migration so
+existing UI/routes stay backward compatible.
 """
 from __future__ import annotations
 
@@ -34,6 +38,7 @@ from .v100_storage import (
     _s3_client,
     _safe_name,
 )
+from .v110_lineage import record_source_reference
 
 VERSION = "1.0.1"
 
@@ -91,6 +96,7 @@ def install_v101_storage(app: FastAPI) -> None:
                 "tenant_key": tenant_key(company),
                 "path_pattern": f"tenants/{tenant_key(company)}/originals/YYYY/MM/",
                 "provider": _provider_name() if _configured() else None,
+                "lineage_registry": "v1.1 first-class",
             }
         finally:
             db.close()
@@ -208,19 +214,30 @@ def install_v101_storage(app: FastAPI) -> None:
                 db.flush()
                 deduplicated = False
 
+            # v1.1: persist provenance as a first-class relational record before
+            # committing the workflow event. The note manifest remains a
+            # compatibility copy until all old routes migrate.
+            record_source_reference(
+                db,
+                company_id=company_id,
+                intake_file_id=row.id,
+                manifest=manifest,
+            )
+
             if company.stage == "Data Requested":
                 company.stage = "Data Received"
             db.add(TimelineEvent(
                 company_id=company_id,
                 event_type="Source Vault",
                 title="Original source retained privately",
-                details=f"{filename} · {source_id} · {tkey} · SHA-256 {sha256[:12]}… · {_provider_name()}",
+                details=f"{filename} · {source_id} · {tkey} · SHA-256 {sha256[:12]}… · {_provider_name()} · first-class lineage",
             ))
             db.commit()
             db.refresh(row)
             public = _public_manifest(row, manifest)
             public["tenant_key"] = tkey
             public["object_path"] = object_key
+            public["lineage_registry"] = "source_references"
             return {
                 "ok": True,
                 "version": VERSION,
