@@ -1,5 +1,5 @@
 (() => {
-  const VERSION = '0.9.4';
+  const VERSION = '0.9.4.1';
   const ai = document.getElementById('ai-intake-lab');
   if (!ai) return;
 
@@ -28,6 +28,7 @@
   };
 
   let lastGoverned = null;
+  let approvalRenderToken = 0;
   const originalFetch = window.fetch.bind(window);
 
   function inPrimaryScope(category, item) {
@@ -54,14 +55,30 @@
     return responsibilityLabel && !scheduleContext;
   }
 
+  function scheduleApprovalUI() {
+    const token = ++approvalRenderToken;
+    let attempts = 0;
+    const run = () => {
+      if (token !== approvalRenderToken) return;
+      attempts += 1;
+      const expected = lastGoverned?.result?.readiness?.length || 0;
+      const box = document.getElementById('ai09-evidence');
+      const count = box ? box.querySelectorAll('.ai09-item').length : 0;
+      if (expected && count >= expected) {
+        applyApprovalUI();
+        return;
+      }
+      if (attempts < 30) setTimeout(run, attempts < 8 ? 40 : 100);
+    };
+    requestAnimationFrame(run);
+  }
+
   function govern(data) {
     if (!data?.ok || !data?.result) return data;
     const result = data.result;
     const category = result.category || 'other';
 
     // Work-order-level responsibility is different from an operation assignee.
-    // v0.9.2 deliberately left ambiguous top-level 負責人 fields unmapped; make
-    // that distinction explicit without pretending it belongs to a schedule row.
     for (const field of result.fields || []) {
       if (category === 'work_orders' && isTopLevelResponsiblePerson(field)) {
         if (!field.canonical_target || field.canonical_target === 'Operation.assignee') {
@@ -77,15 +94,12 @@
       let primary = inPrimaryScope(category, item);
       let reason = '';
 
-      // A single photographed work order is useful evidence, but it is not a
-      // historical dataset. Keep the history criterion as supporting evidence.
       if (category === 'work_orders' && Number(item.module_no) === 6 && item.criterion === 'work_order_history') {
         item.status = 'partial';
         primary = false;
         reason = 'A single work-order document is supporting evidence, not work-order history.';
       }
 
-      // Planned schedule timestamps must never satisfy the actual-timestamps gate.
       if (Number(item.module_no) === 5 && item.criterion === 'actual_timestamps' && !actualVisible) {
         item.status = 'partial';
         primary = false;
@@ -101,9 +115,7 @@
 
     data.version = VERSION;
     lastGoverned = data;
-    queueMicrotask(applyApprovalUI);
-    setTimeout(applyApprovalUI, 60);
-    setTimeout(applyApprovalUI, 220);
+    scheduleApprovalUI();
     return data;
   }
 
@@ -124,11 +136,10 @@
       } catch (_) {}
     }
 
-    // Keep persisted provenance aligned with the UI that actually governed the review.
     if (init?.body instanceof URLSearchParams) {
       const notes = init.body.get('notes');
-      if (notes && /v0\.9(?:\.1|\.2|\.3)?/i.test(notes)) {
-        init.body.set('notes', notes.replace(/v0\.9(?:\.1|\.2|\.3)?/gi, `v${VERSION}`));
+      if (notes && /v0\.9(?:\.1|\.2|\.3|\.4)?/i.test(notes)) {
+        init.body.set('notes', notes.replace(/v0\.9(?:\.1|\.2|\.3|\.4)?/gi, `v${VERSION}`));
       }
     }
     return res;
@@ -147,10 +158,11 @@
       const small = label.querySelector('small');
       if (!checkbox) return;
 
-      checkbox.checked = Boolean(item.default_approve);
+      if (checkbox.checked !== Boolean(item.default_approve)) checkbox.checked = Boolean(item.default_approve);
       label.dataset.ps094Scope = item.approval_scope || 'supporting';
-      label.style.opacity = item.approval_scope === 'primary' ? '' : '0.5';
-      label.title = item.approval_note || '';
+      const desiredOpacity = item.approval_scope === 'primary' ? '' : '0.5';
+      if (label.style.opacity !== desiredOpacity) label.style.opacity = desiredOpacity;
+      if (label.title !== (item.approval_note || '')) label.title = item.approval_note || '';
 
       let badge = label.querySelector('.ps094-policy-badge');
       if (!badge) {
@@ -159,33 +171,40 @@
         badge.style.cssText = 'display:inline-block;margin-top:5px;padding:2px 5px;border-radius:999px;font-size:7px;font-weight:800;letter-spacing:.03em;background:#f2f5f4;color:#657476';
         label.querySelector('div')?.appendChild(badge);
       }
+
+      let badgeText, badgeBg, badgeColor;
       if (item.default_approve) {
-        badge.textContent = 'PRIMARY · AUTO-CHECKED';
-        badge.style.background = '#edf7f3';
-        badge.style.color = '#2e6658';
+        badgeText = 'PRIMARY · AUTO-CHECKED';
+        badgeBg = '#edf7f3';
+        badgeColor = '#2e6658';
       } else if (item.status === 'partial') {
-        badge.textContent = item.approval_scope === 'primary' ? 'PARTIAL · REVIEW FIRST' : 'SUPPORTING · UNCHECKED';
-        badge.style.background = '#fff8e8';
-        badge.style.color = '#80662f';
+        badgeText = item.approval_scope === 'primary' ? 'PARTIAL · REVIEW FIRST' : 'SUPPORTING · UNCHECKED';
+        badgeBg = '#fff8e8';
+        badgeColor = '#80662f';
       } else {
-        badge.textContent = 'SUPPORTING ONLY · UNCHECKED';
-        badge.style.background = '#f3f5f4';
-        badge.style.color = '#718080';
+        badgeText = 'SUPPORTING ONLY · UNCHECKED';
+        badgeBg = '#f3f5f4';
+        badgeColor = '#718080';
       }
+      if (badge.textContent !== badgeText) badge.textContent = badgeText;
+      if (badge.style.background !== badgeBg) badge.style.background = badgeBg;
+      if (badge.style.color !== badgeColor) badge.style.color = badgeColor;
+
       if (small && item.approval_note && !small.dataset.ps094) {
         small.dataset.ps094 = '1';
-        small.textContent = `${small.textContent} · ${item.approval_note}`;
+        small.append(document.createTextNode(` · ${item.approval_note}`));
       }
     });
   }
 
-  const observer = new MutationObserver(() => applyApprovalUI());
-  const evidenceBox = document.getElementById('ai09-evidence');
-  if (evidenceBox) observer.observe(evidenceBox, {childList:true, subtree:true});
+  // IMPORTANT: no subtree MutationObserver here. v0.9.4 observed its own badge
+  // mutations and could re-enter continuously after a result rendered, freezing
+  // Chromium. The bounded scheduler above waits for the evidence list once and
+  // then applies policy idempotently.
 
   const policyNote = document.createElement('div');
   policyNote.className = 'ai09-note';
   policyNote.style.marginTop = '8px';
-  policyNote.innerHTML = '<b>v0.9.4 approval policy:</b> only primary-scope <b>Available</b> evidence is checked automatically. Partial or cross-module supporting evidence stays unchecked until a reviewer explicitly chooses it.';
+  policyNote.innerHTML = '<b>v0.9.4.1 approval policy:</b> only primary-scope <b>Available</b> evidence is checked automatically. Partial or cross-module supporting evidence stays unchecked until a reviewer explicitly chooses it.';
   ai.querySelector('.ai09-head')?.insertAdjacentElement('afterend', policyNote);
 })();
