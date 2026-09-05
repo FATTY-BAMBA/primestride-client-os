@@ -1,4 +1,4 @@
-// Deterministic ingestion stays at v0.8.4; v1.0.3 adds the senior UX hierarchy pass.
+// Deterministic ingestion stays at v0.8.4; v1.0.3 adds hierarchy + progressive disclosure.
 (() => {
   const metric = document.querySelector('.intake-summary-grid .intake-metric:nth-child(3) strong');
   if (metric) metric.textContent = 'v0.8.4';
