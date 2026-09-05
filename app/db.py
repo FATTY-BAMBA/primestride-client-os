@@ -96,6 +96,7 @@ def _install_primestride_bootstrap_hook() -> None:
         def wrapped_init(self, *args, **kwargs):
             original_init(self, *args, **kwargs)
             from .v110_lineage import install_v110_lineage
+            from .v110_review import install_v110_review
             from .v101_runtime import install_v101_runtime
             from .v101_storage import install_v101_storage
             from .v082_runtime import install_v082
@@ -108,6 +109,8 @@ def _install_primestride_bootstrap_hook() -> None:
 
             # v1.1 first-class provenance must exist before source uploads/jobs.
             install_v110_lineage(self)
+            # Review override must register before the legacy v0.8 route.
+            install_v110_review(self)
             # Source-first routes intentionally register before legacy routes so
             # Starlette resolves the lineage-safe implementations first.
             install_v101_runtime(self)
