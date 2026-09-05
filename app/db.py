@@ -80,33 +80,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-# v1.2 compatibility bridge.
-#
-# app/main.py still constructs FastAPI during module import. Until that file is
-# moved behind an application factory, route-shadowing extensions must install at
-# construction time so they remain ahead of legacy prototype routes. The actual
-# extension registry now lives in platform_bootstrap.py; database infrastructure
-# no longer owns component imports or route ordering.
-def _install_app_factory_compatibility_bridge() -> None:
-    try:
-        from fastapi import FastAPI
-
-        if getattr(FastAPI, "_primestride_platform_bridge", False):
-            return
-
-        original_init = FastAPI.__init__
-
-        def wrapped_init(self, *args, **kwargs):
-            original_init(self, *args, **kwargs)
-            from .platform_bootstrap import install_platform_extensions
-            install_platform_extensions(self)
-
-        FastAPI.__init__ = wrapped_init
-        FastAPI._primestride_platform_bridge = True
-    except Exception as exc:
-        print(f"[PrimeStride platform bridge] warning: {exc!r}")
-
-
-_install_app_factory_compatibility_bridge()
