@@ -1,4 +1,4 @@
-// Deterministic ingestion stays at v0.8.4; v1.0 adds production Source Vault lineage.
+// Deterministic ingestion stays at v0.8.4; v1.0.1 makes Source Vault the single intake door.
 (() => {
   const metric = document.querySelector('.intake-summary-grid .intake-metric:nth-child(3) strong');
   if (metric) metric.textContent = 'v0.8.4';
@@ -6,15 +6,16 @@
   if (eyebrow) eyebrow.textContent = 'INGESTION INTELLIGENCE · v0.8.4';
 })();
 
-import('/static/v081.js?v=1000')
-  .then(() => import('/static/v083.js?v=1000'))
-  .then(() => import('/static/v084.js?v=1000'))
-  .then(() => import('/static/v09.js?v=1000'))
-  .then(() => import('/static/v091.js?v=1000'))
-  .then(() => import('/static/v092.js?v=1000'))
-  .then(() => import('/static/v093.js?v=1000'))
-  .then(() => import('/static/v094.js?v=1000'))
-  .then(() => import('/static/v100.js?v=1000'))
+import('/static/v081.js?v=1010')
+  .then(() => import('/static/v083.js?v=1010'))
+  .then(() => import('/static/v084.js?v=1010'))
+  .then(() => import('/static/v09.js?v=1010'))
+  .then(() => import('/static/v091.js?v=1010'))
+  .then(() => import('/static/v092.js?v=1010'))
+  .then(() => import('/static/v093.js?v=1010'))
+  .then(() => import('/static/v094.js?v=1010'))
+  .then(() => import('/static/v100.js?v=1010'))
+  .then(() => import('/static/v101.js?v=1010'))
   .catch((err) => {
     const box = document.getElementById('ingestion-error');
     if (box) {
