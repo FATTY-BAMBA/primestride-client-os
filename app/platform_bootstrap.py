@@ -2,31 +2,31 @@
 
 Central runtime registry for the previously version-stacked implementation.
 
-v1.3 continues Phase 3 consolidation: lineage, ingestion jobs, readiness, source
-lifecycle, intake workflow, and private source storage are now wired from stable
-domain packages. Former release-numbered modules remain compatibility adapters
-for older imports while production routing depends on stable domains.
+v1.3.3 completes the deterministic-intake migration: production routing and
+readiness scoring no longer depend on v082 modules. Those files remain thin
+compatibility adapters while stable intake/readiness/workspace domains own the
+validated behavior.
 """
 from __future__ import annotations
 
+import time
 from importlib import import_module
 from typing import Callable
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
-PLATFORM_VERSION = "1.3.2"
+PLATFORM_VERSION = "1.3.3"
 
 # Order is behavioral: several newer routes intentionally shadow prototype
 # routes, and Starlette resolves the first matching route.
 INSTALLERS: tuple[tuple[str, str, str], ...] = (
     ("lineage", ".lineage.router", "install_lineage_routes"),
     ("job_recovery", ".jobs.router", "install_job_routes"),
-    ("readiness_lifecycle", ".readiness.router", "install_readiness_routes"),
+    ("readiness", ".readiness.router", "install_readiness_routes"),
     ("source_lifecycle", ".lifecycle.router", "install_lifecycle_routes"),
-    ("intake_workflow", ".intake.router", "install_intake_routes"),
+    ("intake", ".intake.router", "install_intake_routes"),
     ("storage", ".storage.router", "install_storage_routes"),
-    ("deterministic_intake", ".v082_runtime", "install_v082"),
-    ("readiness_ranges", ".v082_perf", "install_v082_perf"),
+    ("workspace", ".workspace.router", "install_workspace_routes"),
     ("multimodal_background", ".v093_ai", "install_v093_ai"),
     ("multimodal_section_mapping", ".v092_ai", "install_v092_ai"),
     ("multimodal_mapping", ".v091_ai", "install_v091_ai"),
@@ -44,6 +44,17 @@ def install_platform_extensions(app: FastAPI) -> None:
     """Install every Client OS runtime extension exactly once, in route order."""
     if getattr(app.state, "ps_platform_extensions_installed", False):
         return
+
+    # Preserve the useful v0.8 Server-Timing signal, but report the actual
+    # platform version instead of a historical intake-runtime version.
+    @app.middleware("http")
+    async def primestride_timing(request: Request, call_next):
+        started = time.perf_counter()
+        response = await call_next(request)
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        response.headers["Server-Timing"] = f"primestride;dur={elapsed_ms:.1f}"
+        response.headers["X-PrimeStride-Version"] = PLATFORM_VERSION
+        return response
 
     installed: list[str] = []
     for component, module_name, function_name in INSTALLERS:
@@ -69,6 +80,8 @@ def install_platform_extensions(app: FastAPI) -> None:
                 "lifecycle",
                 "intake",
                 "storage",
+                "workspace",
             ],
+            "deterministic_runtime": "app.intake.deterministic",
             "compatibility_bridge": "none",
         }
