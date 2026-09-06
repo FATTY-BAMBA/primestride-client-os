@@ -2,10 +2,10 @@
 
 Central runtime registry for the previously version-stacked implementation.
 
-v1.3.3 completes the deterministic-intake migration: production routing and
-readiness scoring no longer depend on v082 modules. Those files remain thin
-compatibility adapters while stable intake/readiness/workspace domains own the
-validated behavior.
+v1.3.4 completes the backend domain migration: production routing for lineage,
+jobs, readiness, lifecycle, intake, storage, workspace, deterministic intake, and
+multimodal AI now depends on stable domain packages. Release-numbered modules are
+compatibility adapters only.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from typing import Callable
 
 from fastapi import FastAPI, Request
 
-PLATFORM_VERSION = "1.3.3"
+PLATFORM_VERSION = "1.3.4"
 
 # Order is behavioral: several newer routes intentionally shadow prototype
 # routes, and Starlette resolves the first matching route.
@@ -27,10 +27,7 @@ INSTALLERS: tuple[tuple[str, str, str], ...] = (
     ("intake", ".intake.router", "install_intake_routes"),
     ("storage", ".storage.router", "install_storage_routes"),
     ("workspace", ".workspace.router", "install_workspace_routes"),
-    ("multimodal_background", ".v093_ai", "install_v093_ai"),
-    ("multimodal_section_mapping", ".v092_ai", "install_v092_ai"),
-    ("multimodal_mapping", ".v091_ai", "install_v091_ai"),
-    ("multimodal_base", ".v09_ai", "install_v09_ai"),
+    ("ai", ".ai.router", "install_ai_routes"),
 )
 
 
@@ -45,8 +42,6 @@ def install_platform_extensions(app: FastAPI) -> None:
     if getattr(app.state, "ps_platform_extensions_installed", False):
         return
 
-    # Preserve the useful v0.8 Server-Timing signal, but report the actual
-    # platform version instead of a historical intake-runtime version.
     @app.middleware("http")
     async def primestride_timing(request: Request, call_next):
         started = time.perf_counter()
@@ -81,7 +76,9 @@ def install_platform_extensions(app: FastAPI) -> None:
                 "intake",
                 "storage",
                 "workspace",
+                "ai",
             ],
             "deterministic_runtime": "app.intake.deterministic",
+            "multimodal_runtime": "app.ai",
             "compatibility_bridge": "none",
         }
