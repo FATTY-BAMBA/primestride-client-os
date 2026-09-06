@@ -1,4 +1,4 @@
-"""HTTP routes for lifecycle-safe source-first intake and human review."""
+"""HTTP routes for lifecycle-safe source-first and deterministic intake."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -18,13 +18,13 @@ from ..lifecycle.service import (
 from ..lineage.schema import ingestion_jobs
 from ..lineage.service import create_ingestion_job, manifest_from_notes
 from ..models import Company, IntakeFile, TimelineEvent
-from ..v082_runtime import (
+from .deterministic import (
     EXPECTED_DATA_CATEGORIES,
     TEMPLATES,
     VALID_CATEGORIES,
-    _clear_file_evidence,
-    _find_existing_file,
-    _memory_groups,
+    clear_file_evidence,
+    find_existing_file,
+    memory_groups,
 )
 from .service import DOMAIN_VERSION, MANIFEST_PREFIX, inspection_engine, merge_notes_preserving_source
 
@@ -73,7 +73,7 @@ def install_intake_routes(app: FastAPI) -> None:
                     "received_categories": received_categories,
                     "files_received": len(active),
                     "needs_review": needs_review,
-                    "memory": _memory_groups(company.memory_items),
+                    "memory": memory_groups(company.memory_items),
                     "intake_version": DOMAIN_VERSION,
                 },
             )
@@ -97,11 +97,11 @@ def install_intake_routes(app: FastAPI) -> None:
                 return HTMLResponse("Invalid data category", 400)
 
             clean_name = filename.strip()
-            existing = _find_existing_file(db, company_id, clean_name, notes)
+            existing = find_existing_file(db, company_id, clean_name, notes)
             if existing:
                 old_category = existing.category
                 old_notes = existing.notes
-                _clear_file_evidence(db, company_id, existing.filename)
+                clear_file_evidence(db, company_id, existing.filename)
                 existing.filename = clean_name
                 existing.category = category
                 existing.source = source.strip() or existing.source or "Manual"
@@ -148,8 +148,6 @@ def install_intake_routes(app: FastAPI) -> None:
                     result_summary=f"{clean_name} · {category} · saved inspection awaiting human review",
                 )
 
-            # Lifecycle state is the authoritative stage gate. Newly registered
-            # files default ACTIVE except the explicitly migrated engineering fixtures.
             ensure_lifecycle_rows(db, company_id)
             all_files = list(
                 db.scalars(select(IntakeFile).where(IntakeFile.company_id == company_id)).all()
@@ -169,6 +167,53 @@ def install_intake_routes(app: FastAPI) -> None:
             ))
             db.commit()
             return RedirectResponse(f"/companies/{company_id}/data-intake", 303)
+        finally:
+            db.close()
+
+    @app.post("/companies/{company_id}/intake-files/{file_id}/reclassify", include_in_schema=False)
+    def reclassify_file(
+        company_id: int,
+        file_id: int,
+        category: str = Form(...),
+    ):
+        if category not in VALID_CATEGORIES:
+            return HTMLResponse("Invalid data category", 400)
+
+        db = SessionLocal()
+        try:
+            item = db.scalar(
+                select(IntakeFile).where(
+                    IntakeFile.id == file_id,
+                    IntakeFile.company_id == company_id,
+                )
+            )
+            company = db.get(Company, company_id)
+            if not item or not company:
+                return HTMLResponse("File or company not found", 404)
+
+            old_category = item.category
+            if old_category != category:
+                clear_file_evidence(db, company_id, item.filename)
+                item.category = category
+            item.status = "Needs Review"
+
+            ensure_lifecycle_rows(db, company_id)
+            all_files = list(
+                db.scalars(select(IntakeFile).where(IntakeFile.company_id == company_id)).all()
+            )
+            old_stage = company.stage
+            reconcile_stage(db, company, all_files)
+            db.add(TimelineEvent(
+                company_id=company_id,
+                event_type="Data Correction",
+                title=f"File reclassified: {item.filename}",
+                details=(
+                    f"{old_category} → {category}; prior evidence from this file superseded"
+                    + (f" · Stage: {old_stage} → {company.stage}" if old_stage != company.stage else "")
+                ),
+            ))
+            db.commit()
+            return RedirectResponse(f"/companies/{company_id}/data-intake#file-{file_id}", 303)
         finally:
             db.close()
 
@@ -196,9 +241,6 @@ def install_intake_routes(app: FastAPI) -> None:
                 ).all()
             )
             for duplicate in duplicates:
-                # Lifecycle rows are workflow metadata, so remove an orphan row
-                # when collapsing duplicate IntakeFile registrations. SourceReference
-                # provenance remains untouched.
                 db.execute(
                     delete(intake_source_lifecycle).where(
                         intake_source_lifecycle.c.intake_file_id == duplicate.id
@@ -240,7 +282,56 @@ def install_intake_routes(app: FastAPI) -> None:
                 event_type="Data Review",
                 title=f"Human review confirmed: {item.filename}",
                 details=(
-                    f"Ingestion jobs awaiting review marked completed"
+                    "Ingestion jobs awaiting review marked completed"
+                    + (f" · Stage: {old_stage} → {company.stage}" if old_stage != company.stage else "")
+                ),
+            ))
+            db.commit()
+            return RedirectResponse(f"/companies/{company_id}/data-intake", 303)
+        finally:
+            db.close()
+
+    @app.post("/companies/{company_id}/intake-files/{file_id}/remove", include_in_schema=False)
+    def remove_file(company_id: int, file_id: int):
+        db = SessionLocal()
+        try:
+            item = db.scalar(
+                select(IntakeFile).where(
+                    IntakeFile.id == file_id,
+                    IntakeFile.company_id == company_id,
+                )
+            )
+            company = db.get(Company, company_id)
+            if not item or not company:
+                return HTMLResponse("File or company not found", 404)
+
+            filename = item.filename
+            clear_file_evidence(db, company_id, filename)
+            # Workflow rows may be removed; immutable SourceReference/R2 provenance
+            # is intentionally retained for audit history.
+            db.execute(
+                delete(intake_source_lifecycle).where(
+                    intake_source_lifecycle.c.intake_file_id == item.id
+                )
+            )
+            db.delete(item)
+            db.flush()
+
+            remaining = list(
+                db.scalars(
+                    select(IntakeFile)
+                    .where(IntakeFile.company_id == company_id)
+                    .order_by(IntakeFile.id)
+                ).all()
+            )
+            old_stage = company.stage
+            reconcile_stage(db, company, remaining)
+            db.add(TimelineEvent(
+                company_id=company_id,
+                event_type="Data Correction",
+                title=f"File removed from intake: {filename}",
+                details=(
+                    "Evidence sourced only from this file was removed; retained source provenance preserved"
                     + (f" · Stage: {old_stage} → {company.stage}" if old_stage != company.stage else "")
                 ),
             ))
