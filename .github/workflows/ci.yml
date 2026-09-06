@@ -1,0 +1,26 @@
+name: Client OS CI
+
+on:
+  push:
+    branches: ["main", "feature/**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Compile Python
+        run: python -m compileall app migrations tests
+      - name: Run migrations on fresh SQLite
+        env:
+          DATABASE_URL: sqlite:///./ci_migration_smoke.db
+        run: alembic upgrade head
+      - name: Run regression suite
+        run: pytest -q
