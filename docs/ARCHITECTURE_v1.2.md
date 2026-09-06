@@ -1,4 +1,4 @@
-# PrimeStride Client OS Architecture v1.3
+# PrimeStride Client OS Architecture v1.4
 
 ## Goal
 
@@ -9,10 +9,6 @@ Stabilize the proven v1.1 behavior before adding more product capability. Preser
 ### Central runtime registry
 
 `app/platform_bootstrap.py` became the single ordered registry for runtime components. Route precedence is documented in one place instead of being encoded as a long list of imports inside `db.py`.
-
-### Stable frontend bootstrap
-
-`app/static/v07.js` became a stable intake bootstrap with one ordered module registry and one sequential loader. Existing versioned modules remain for compatibility, but future consolidation can happen behind this entrypoint without changing the template or creating another promise-chain wrapper.
 
 ### Explicit application factory
 
@@ -41,8 +37,6 @@ Production wiring now also uses:
 
 Former `v111_lifecycle.py`, `v101_runtime.py`, and `v110_review.py` modules are compatibility adapters. Production routing no longer depends on them.
 
-The jobs and readiness domains now import lifecycle behavior from `app.lifecycle`, eliminating another release-numbered dependency edge.
-
 ### v1.3.2 — private storage / Source Vault
 
 Production wiring now uses `app/storage/` for the complete retained-original contract:
@@ -70,8 +64,6 @@ Stable ownership is now:
 
 The historical `v082_runtime.py` and `v082_perf.py` files are thin compatibility adapters only. Browser-side table detection and canonical mapping remain on the validated v0.8.4 engine; this release changes ownership and wiring, not extraction behavior.
 
-The platform timing middleware also moved into `platform_bootstrap.py`, so `Server-Timing` remains available while `X-PrimeStride-Version` reports the actual platform release rather than `0.8.2`.
-
 ### v1.3.4 — multimodal AI domain
 
 Production no longer installs the `v09_ai.py`, `v091_ai.py`, `v092_ai.py`, or `v093_ai.py` route implementations.
@@ -84,9 +76,26 @@ Stable ownership is now:
 
 The background contract is preserved: Source-First supplies the retained `source_id`, AI processing creates a linked IngestionJob, the browser polls without blocking the page, and only reviewed evidence can become client truth.
 
-`app/jobs/` now imports the stable AI service directly for retry/recovery, eliminating the last production dependency on release-numbered AI modules. The four historical `v09x` Python modules remain compatibility adapters for older imports only.
+`app/jobs/` imports the stable AI service directly for retry/recovery, eliminating the last production backend dependency on release-numbered AI modules.
 
-The validated section-aware extraction behavior remains the same: planned and actual timestamps stay separate, instructions/constraints are distinguished from actual exceptions, a single work order never becomes invented history, and canonical identifiers are defensively filtered before reaching the UI.
+## v1.4 Phase 4 frontend consolidation
+
+### v1.4.0 — stable browser domains
+
+Data Intake now boots through one stable browser entrypoint:
+
+`/static/frontend/bootstrap.js`
+
+That bootstrap exposes four ordered browser domains:
+
+- `frontend/deterministic.js` — validated structured-browser inspection stack
+- `frontend/ai.js` — multimodal review, section-aware rendering, background polling, and evidence governance stack
+- `frontend/source.js` — Source Vault + Source-First orchestration stack
+- `frontend/workspace.js` — progressive disclosure, lineage/job controls, and source lifecycle UI stack
+
+The legacy `v07.js` file is now only a compatibility entrypoint that forwards to the stable frontend bootstrap. The Data Intake template no longer contains or needs knowledge of the 13-file release-numbered load order.
+
+The release-numbered browser files remain behavior-compatibility leaves behind the stable domain boundaries for this pass. They are intentionally not deleted yet because the Source-First → AI → review → TEST-isolation flow has already been proven and preserving that behavior is more important than a large risky rewrite. Future frontend work can replace one stable domain at a time without changing templates or the application shell.
 
 ## Required invariants
 
@@ -99,9 +108,9 @@ The validated section-aware extraction behavior remains the same: planned and ac
 7. Readiness ranges are deterministic and evidence-based.
 8. Existing v1.1 URLs and behavior remain backward compatible during consolidation.
 
-## Backend domain status after v1.3.4
+## Platform status after v1.4.0
 
-Production bootstrap is now composed entirely from stable domains:
+Backend production bootstrap is entirely stable-domain based:
 
 - lineage
 - jobs
@@ -112,13 +121,18 @@ Production bootstrap is now composed entirely from stable domains:
 - workspace
 - ai
 
-Release-numbered backend modules remain only as compatibility adapters where older imports still exist.
+Frontend production wiring is now domain-oriented behind a single stable bootstrap:
+
+- deterministic
+- ai
+- source
+- workspace
 
 ## Remaining cleanup
 
-### Frontend consolidation
+### Frontend leaf retirement
 
-Merge the stable intake behavior into a small number of domain modules behind the existing bootstrap. The current `v081/v083/v084/v09/v091/v092/v093/v094/v100/v101/v103/v110/v111` browser modules should be retired only after end-to-end parity for structured intake, multimodal intake, Source-First lineage, lifecycle isolation, human review, and job recovery.
+Replace the release-numbered browser implementation leaves inside each stable frontend domain only after parity tests. This is now an internal domain-by-domain cleanup rather than a template/bootstrap problem.
 
 ### Formal migrations
 
