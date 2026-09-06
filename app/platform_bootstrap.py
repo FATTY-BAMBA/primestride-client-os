@@ -1,9 +1,9 @@
 """PrimeStride Client OS platform bootstrap.
 
-v1.5.0 keeps the consolidated backend/frontend architecture and makes Alembic
-the authoritative schema-provisioning path. The release also adds a regression
-suite and CI so Source-First, lineage, lifecycle isolation and readiness rules can
-be changed without relying only on manual verification.
+v1.6.0 adds repeatable account/tenant provisioning on top of the consolidated
+v1.5 platform. New clients receive a durable tenant namespace in the same
+transaction that creates their Company record; Source Vault now resolves that
+persisted identity instead of depending on a mutable company name.
 """
 from __future__ import annotations
 
@@ -13,9 +13,10 @@ from typing import Callable
 
 from fastapi import FastAPI, Request
 
-PLATFORM_VERSION = "1.5.0"
+PLATFORM_VERSION = "1.6.0"
 
 INSTALLERS: tuple[tuple[str, str, str], ...] = (
+    ("accounts", ".accounts.router", "install_account_routes"),
     ("lineage", ".lineage.router", "install_lineage_routes"),
     ("job_recovery", ".jobs.router", "install_job_routes"),
     ("readiness", ".readiness.router", "install_readiness_routes"),
@@ -62,6 +63,7 @@ def install_platform_extensions(app: FastAPI) -> None:
             "bootstrap": "explicit-application-factory",
             "components": list(installed),
             "stable_domains": [
+                "accounts",
                 "lineage",
                 "jobs",
                 "readiness",
@@ -77,5 +79,6 @@ def install_platform_extensions(app: FastAPI) -> None:
             "frontend_domains": ["deterministic", "ai", "source", "workspace"],
             "schema_migrations": "alembic",
             "regression_ci": "github-actions",
+            "tenant_provisioning": "persistent-tenant-config",
             "compatibility_bridge": "none",
         }
