@@ -1,11 +1,9 @@
 """PrimeStride Client OS platform bootstrap.
 
-Central runtime registry for the previously version-stacked implementation.
-
-v1.4.0 keeps the fully consolidated backend domains from v1.3.4 and adds a
-stable domain-oriented browser bootstrap for Data Intake. Release-numbered
-frontend modules remain behavior-compatibility leaves behind that stable browser
-boundary while their wiring is no longer exposed to templates or app bootstrap.
+v1.5.0 keeps the consolidated backend/frontend architecture and makes Alembic
+the authoritative schema-provisioning path. The release also adds a regression
+suite and CI so Source-First, lineage, lifecycle isolation and readiness rules can
+be changed without relying only on manual verification.
 """
 from __future__ import annotations
 
@@ -15,10 +13,8 @@ from typing import Callable
 
 from fastapi import FastAPI, Request
 
-PLATFORM_VERSION = "1.4.0"
+PLATFORM_VERSION = "1.5.0"
 
-# Order is behavioral: several newer routes intentionally shadow prototype
-# routes, and Starlette resolves the first matching route.
 INSTALLERS: tuple[tuple[str, str, str], ...] = (
     ("lineage", ".lineage.router", "install_lineage_routes"),
     ("job_recovery", ".jobs.router", "install_job_routes"),
@@ -33,12 +29,10 @@ INSTALLERS: tuple[tuple[str, str, str], ...] = (
 
 def _load_installer(module_name: str, function_name: str) -> Callable[[FastAPI], None]:
     module = import_module(module_name, package=__package__)
-    installer = getattr(module, function_name)
-    return installer
+    return getattr(module, function_name)
 
 
 def install_platform_extensions(app: FastAPI) -> None:
-    """Install every Client OS runtime extension exactly once, in route order."""
     if getattr(app.state, "ps_platform_extensions_installed", False):
         return
 
@@ -53,8 +47,7 @@ def install_platform_extensions(app: FastAPI) -> None:
 
     installed: list[str] = []
     for component, module_name, function_name in INSTALLERS:
-        installer = _load_installer(module_name, function_name)
-        installer(app)
+        _load_installer(module_name, function_name)(app)
         installed.append(component)
 
     app.state.ps_platform_extensions_installed = True
@@ -82,5 +75,7 @@ def install_platform_extensions(app: FastAPI) -> None:
             "multimodal_runtime": "app.ai",
             "frontend_runtime": "/static/frontend/bootstrap.js",
             "frontend_domains": ["deterministic", "ai", "source", "workspace"],
+            "schema_migrations": "alembic",
+            "regression_ci": "github-actions",
             "compatibility_bridge": "none",
         }
