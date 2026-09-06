@@ -68,9 +68,25 @@ Stable ownership is now:
 - `app/readiness/scoring.py` — evidence coverage, honest readiness range, and next-gap intelligence
 - `app/workspace/router.py` — lifecycle-safe Stage Intelligence and Solution Blueprint read paths
 
-The historical `v082_runtime.py` and `v082_perf.py` files are thin compatibility adapters only. Browser-side table detection and canonical mapping remain on the validated v0.8.4 engine for now; this release changes ownership and wiring, not extraction behavior.
+The historical `v082_runtime.py` and `v082_perf.py` files are thin compatibility adapters only. Browser-side table detection and canonical mapping remain on the validated v0.8.4 engine; this release changes ownership and wiring, not extraction behavior.
 
-The platform timing middleware also moved into `platform_bootstrap.py`, so `Server-Timing` remains available while `X-PrimeStride-Version` now reports the actual platform release rather than `0.8.2`.
+The platform timing middleware also moved into `platform_bootstrap.py`, so `Server-Timing` remains available while `X-PrimeStride-Version` reports the actual platform release rather than `0.8.2`.
+
+### v1.3.4 — multimodal AI domain
+
+Production no longer installs the `v09_ai.py`, `v091_ai.py`, `v092_ai.py`, or `v093_ai.py` route implementations.
+
+Stable ownership is now:
+
+- `app/ai/schema.py` — controlled categories, readiness keys, canonical targets, and strict section-aware structured-output schema
+- `app/ai/service.py` — provider configuration, evidence prompts, defensive result validation, retained-source linking, provider helpers, and first-class IngestionJob state recording
+- `app/ai/router.py` — synchronous compatibility analyze route plus the production background start/poll flow
+
+The background contract is preserved: Source-First supplies the retained `source_id`, AI processing creates a linked IngestionJob, the browser polls without blocking the page, and only reviewed evidence can become client truth.
+
+`app/jobs/` now imports the stable AI service directly for retry/recovery, eliminating the last production dependency on release-numbered AI modules. The four historical `v09x` Python modules remain compatibility adapters for older imports only.
+
+The validated section-aware extraction behavior remains the same: planned and actual timestamps stay separate, instructions/constraints are distinguished from actual exceptions, a single work order never becomes invented history, and canonical identifiers are defensively filtered before reaching the UI.
 
 ## Required invariants
 
@@ -83,15 +99,26 @@ The platform timing middleware also moved into `platform_bootstrap.py`, so `Serv
 7. Readiness ranges are deterministic and evidence-based.
 8. Existing v1.1 URLs and behavior remain backward compatible during consolidation.
 
+## Backend domain status after v1.3.4
+
+Production bootstrap is now composed entirely from stable domains:
+
+- lineage
+- jobs
+- readiness
+- lifecycle
+- intake
+- storage
+- workspace
+- ai
+
+Release-numbered backend modules remain only as compatibility adapters where older imports still exist.
+
 ## Remaining cleanup
-
-### AI domain
-
-Move multimodal provider interaction, section-aware mapping, background polling, and result validation into a stable `ai/` package. Versioned AI modules become compatibility adapters after parity tests.
 
 ### Frontend consolidation
 
-Merge stable intake behavior into a small number of domain modules behind the existing bootstrap. Remove DOM monkeypatch layers only after end-to-end parity for structured intake, multimodal intake, lifecycle isolation and job recovery.
+Merge the stable intake behavior into a small number of domain modules behind the existing bootstrap. The current `v081/v083/v084/v09/v091/v092/v093/v094/v100/v101/v103/v110/v111` browser modules should be retired only after end-to-end parity for structured intake, multimodal intake, Source-First lineage, lifecycle isolation, human review, and job recovery.
 
 ### Formal migrations
 
