@@ -7,10 +7,10 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import insert, inspect, select, update
 from sqlalchemy.orm import Session
 
-from ..db import engine
+from ..db import RUNTIME_SCHEMA_BOOTSTRAP, engine
 from ..models import IntakeFile
 from .schema import ingestion_jobs, lineage_metadata, source_references
 
@@ -31,7 +31,20 @@ def ensure_lineage_schema() -> None:
     with _schema_lock:
         if _schema_ready:
             return
-        lineage_metadata.create_all(bind=engine, checkfirst=True)
+        if RUNTIME_SCHEMA_BOOTSTRAP:
+            lineage_metadata.create_all(bind=engine, checkfirst=True)
+        else:
+            db_inspector = inspect(engine)
+            missing = [
+                name for name in ("source_references", "ingestion_jobs")
+                if not db_inspector.has_table(name)
+            ]
+            if missing:
+                raise RuntimeError(
+                    "Lineage schema is not migrated. Missing: "
+                    + ", ".join(missing)
+                    + ". Run `alembic upgrade head`."
+                )
         _schema_ready = True
 
 
