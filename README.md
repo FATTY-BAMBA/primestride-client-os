@@ -1,4 +1,4 @@
-# PrimeStride Client OS v1.5
+# PrimeStride Client OS v1.6
 
 Internal implementation and client-intelligence operating system for PrimeStride AI.
 
@@ -6,9 +6,10 @@ Internal implementation and client-intelligence operating system for PrimeStride
 
 Client OS turns messy client evidence into a governed implementation workflow:
 
-`Source-First Intake → private original → SourceReference → IngestionJob → deterministic/AI proposal → human review → lifecycle-safe readiness → client blueprint`
+`Provision Client → Source-First Intake → private original → SourceReference → IngestionJob → deterministic/AI proposal → human review → lifecycle-safe readiness → client blueprint`
 
 Core rules:
+- every Company receives a durable tenant identity
 - retain the original before interpretation
 - ACTIVE / TEST / ARCHIVED evidence is explicit
 - TEST and ARCHIVED sources never affect readiness or stage gates
@@ -19,6 +20,7 @@ Core rules:
 ## Architecture
 
 Stable backend domains:
+- `app/accounts/`
 - `app/lineage/`
 - `app/jobs/`
 - `app/readiness/`
@@ -33,6 +35,22 @@ Stable Data Intake frontend entrypoint:
 
 Legacy release-numbered modules remain only as compatibility leaves while they are retired safely.
 
+## Multi-client provisioning
+
+v1.6 introduces `tenant_configs` as the durable client provisioning record. A new Company receives a stable tenant key such as:
+
+`c0002-acme-manufacturing`
+
+That key is independent from the mutable company display name and is used as the Source Vault namespace:
+
+`tenants/<tenant_key>/originals/YYYY/MM/...`
+
+Existing SourceReference tenant keys are adopted rather than rewritten, so retained object paths remain immutable.
+
+Provisioning status is available at:
+
+`GET /companies/{company_id}/provisioning/status`
+
 ## Database migrations
 
 Alembic is authoritative from v1.5 onward. Runtime `create_all()` is no longer the normal provisioning path.
@@ -41,7 +59,7 @@ Alembic is authoritative from v1.5 onward. Runtime `create_all()` is no longer t
 alembic upgrade head
 ```
 
-The first baseline migration is adoption-safe for existing Client OS databases: existing tables are preserved and missing tables/indexes are created.
+Migrations are adoption-safe for existing Client OS databases. v1.6 adds durable tenant provisioning without moving or renaming retained Source Vault objects.
 
 `RUNTIME_SCHEMA_BOOTSTRAP=1` exists only as an explicit escape hatch for disposable local experiments.
 
@@ -63,12 +81,12 @@ Open http://127.0.0.1:8000
 pytest -q
 ```
 
-GitHub Actions also runs:
+GitHub Actions runs:
 - Python compilation
 - a fresh-database Alembic migration smoke test
 - the regression suite
 
-The initial regression contract covers schema ownership, stable platform wiring, lifecycle TEST isolation, deterministic readiness ranges, gap intelligence, and immutable SourceReference identity/object provenance.
+Regression coverage includes schema ownership, platform wiring, tenant-key immutability, historical namespace adoption, lifecycle TEST isolation, deterministic readiness ranges, gap intelligence, and immutable SourceReference identity/object provenance.
 
 ## Deployment
 
