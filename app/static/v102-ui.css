@@ -1,0 +1,232 @@
+/* PrimeStride Client OS v1.0.2 — professional typography + density pass.
+   Goal: preserve the calm operations-console aesthetic while removing 8–10px
+   UI copy that becomes hard to scan on desktop. 11px is now the practical
+   minimum for secondary copy; normal operational text sits around 12–15px. */
+
+:root{
+  --ps-text-body:15px;
+  --ps-text-secondary:12px;
+  --ps-text-small:11px;
+  --ps-text-label:11px;
+  --ps-text-table:12.5px;
+  --ps-text-heading:16px;
+}
+
+body{
+  font-size:var(--ps-text-body);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* Shell / navigation */
+.topbar{height:62px}
+.brand-copy strong{font-size:15px}
+.brand-copy small{font-size:12px}
+.topbar-meta{font-size:12px}
+.workspace-shell{padding-top:38px}
+
+/* Page hierarchy */
+.eyebrow{font-size:11px;letter-spacing:.12em;line-height:1.35}
+.page-head h1,.company-head h1{font-size:34px;line-height:1.12}
+.page-head p{font-size:14px;line-height:1.6;max-width:820px}
+.back,.head-tags{font-size:12.5px}
+.stage-pill,.stage-badge{font-size:11px;padding:5px 9px}
+
+/* Controls */
+.btn,button{font-size:13px;min-height:38px;padding:9px 14px}
+input,select,textarea,
+.quick-add input,.mini-form input,.grid-form input,.grid-form select,
+.mini-form select,.stack-form textarea,.review-card input,.review-card select{
+  font-size:13px;
+  line-height:1.45;
+  padding:10px 11px;
+}
+.new-company-form label,
+.grid-form label,.stack-form label,.inline-label{font-size:11.5px;line-height:1.4}
+
+/* Dashboard */
+.metric{padding:18px 20px;min-height:98px}
+.metric span{font-size:11px}
+.metric strong{font-size:29px}
+.metric small{font-size:11px;line-height:1.4}
+.stage-token{font-size:11.5px;padding:7px 10px}
+.stage-token b{font-size:11.5px}
+.section-head{padding:18px 20px}
+.section-head h2{font-size:16px}
+.section-head p{font-size:12px;line-height:1.45}
+.accounts-table th{font-size:10.5px;padding:11px 16px}
+.accounts-table td{font-size:13px;padding:14px 16px;line-height:1.45}
+.account-name{font-size:14px}
+.account-industry{font-size:11.5px}
+
+/* Core panels */
+.panel{padding:20px}
+.panel-title h2{font-size:16px}
+.panel-title span{font-size:12px}
+.hero-panel h3{font-size:27px}
+.subtle,.gate-note{font-size:12px;line-height:1.55}
+.pain b{font-size:12.5px}
+.pain p,.pain blockquote,blockquote{font-size:12px;line-height:1.5}
+.severity{font-size:10px}
+.discovery-grid span{font-size:10.5px}
+.discovery-grid p{font-size:12.5px;line-height:1.5}
+.empty{font-size:12px}
+.ready-top{font-size:10.5px}
+.ready-card h3{font-size:12.5px}
+.ready-card p{font-size:11.5px;line-height:1.45}
+.task b{font-size:12.5px}
+.task small,.module-row small,.timeline small{font-size:11px;line-height:1.4}
+.module-row{font-size:12.5px}
+.fit{font-size:10px}
+.timeline b,.meeting-mini b{font-size:11.5px}
+.timeline p,.meeting-mini small{font-size:11px;line-height:1.45}
+
+/* Discovery / meeting */
+.meeting-top p{font-size:12.5px}
+.progress-copy span,.qno{font-size:10.5px}
+.wizard-step>p{font-size:13px;line-height:1.55}
+.meeting-rule{font-size:10.5px}
+.review-card h3,.module-fit-grid label{font-size:10.5px}
+
+/* Readiness + blueprint (v05) */
+.stage-next-box>span{font-size:10.5px}
+.stage-next-box small{font-size:12px}
+.stage-check b{font-size:13px}
+.stage-check small{font-size:11.5px;line-height:1.45}
+.v05-list li,.v05-action-list li{font-size:12.5px}
+.v05-action-list li>span{font-size:11px}
+.v05-link-grid b{font-size:13px}
+.v05-link-grid small{font-size:11.5px;line-height:1.45}
+.readiness-principle p{font-size:13px;line-height:1.55}
+.readiness-principle small{font-size:11.5px}
+.readiness-module-head h2{font-size:19px}
+.readiness-module-head small{font-size:11.5px}
+.readiness-score-box span{font-size:11px}
+.evidence-progress>div:first-child{font-size:12px}
+.evidence-progress small{font-size:11px;line-height:1.4}
+.criteria-table th{font-size:10.5px;padding:11px 12px}
+.criteria-table td{font-size:12.5px;line-height:1.5;padding:12px}
+.criteria-table b{font-size:12.5px}
+.criteria-table small{font-size:11px;line-height:1.4}
+.evidence-status{font-size:10px;padding:5px 8px}
+.criterion-edit summary{font-size:11.5px}
+.criterion-edit label{font-size:10.5px}
+.criterion-edit input,.criterion-edit select,.criterion-edit textarea{font-size:12px;padding:8px}
+.criterion-edit button{font-size:11px}
+.logic-grid b{font-size:12px}
+.logic-grid span{font-size:11px;line-height:1.4}
+.readiness-logic-card>p{font-size:12px}
+.scope-card b,.blueprint-memory-list b,.decision-row b{font-size:12.5px}
+.scope-card small,.blueprint-memory-list small,.decision-row small{font-size:11px;line-height:1.4}
+.text-link{font-size:11.5px}
+.spine-node>span,.phase-card>span,.blueprint-readiness-card>span,.stage-mini>div span{font-size:10px}
+.spine-node b{font-size:12.5px}
+.spine-node small{font-size:11px}
+.operating-spine-panel>p{font-size:11.5px}
+.phase-card p{font-size:11.5px}
+.phase-proof b,.phase-proof span{font-size:10.5px}
+.blueprint-readiness-card>b{font-size:12px}
+.blueprint-readiness-card small{font-size:11px}
+.decision-status{font-size:9.5px}
+.decision-row p{font-size:12px}
+.decision-row time{font-size:10.5px}
+.decision-add summary{font-size:11.5px}
+.blueprint-next-card p{font-size:12px}
+.muted{font-size:11.5px}
+.stage-mini>div b{font-size:12px}
+
+/* Capture / intelligence (v06) */
+.capture-mode{font-size:10.5px}
+.capture-input label{font-size:11px}
+.capture-actions small{font-size:11.5px}
+.capture-principle b{font-size:12.5px}
+.capture-principle small{font-size:11.5px;line-height:1.5}
+.capture-results-head span{font-size:11px}
+.proposal-type{font-size:10px}
+.proposal-main b{font-size:13.5px}
+.proposal-main small{font-size:11.5px;line-height:1.5}
+.proposal-actions button{font-size:11.5px}
+.capture-empty{font-size:12px}
+.capture-disclaimer{font-size:11.5px;line-height:1.55}
+
+/* Deterministic ingestion (v07) */
+.ingestion-lab-head h2{font-size:21px}
+.ingestion-lab-head p{font-size:12.5px;line-height:1.6}
+.privacy-pill{font-size:10.5px}
+.ingestion-drop strong{font-size:15px}
+.ingestion-drop span{font-size:11.5px}
+.ingestion-support span{font-size:9.5px!important}
+.inspection-empty{font-size:12px}
+.inspection-stat span{font-size:10px}
+.inspection-stat strong{font-size:23px}
+.inspection-stat small{font-size:10.5px;line-height:1.4}
+.inspection-controls label{font-size:10.5px}
+.inspection-controls select,.inspection-controls input{font-size:12px;padding:9px}
+.inspection-box-head b{font-size:12.5px}
+.inspection-box-head span{font-size:10.5px}
+.detected-table th{font-size:10px;padding:10px}
+.detected-table td,.detected-table b{font-size:12px;line-height:1.45}
+.detected-table small{font-size:10.5px;line-height:1.4}
+.mapping-target{font-size:10.5px}
+.confidence{font-size:10px}
+.quality-item b,.evidence-suggestion b{font-size:11.5px}
+.quality-item small,.evidence-suggestion small{font-size:10.5px;line-height:1.45}
+.evidence-suggestion em{font-size:9.5px}
+.preview-table{font-size:10.5px}
+.inspection-savebar p{font-size:11.5px;line-height:1.5}
+.inspection-savebar small{font-size:10.5px}
+.save-status{font-size:10.5px}
+.xlsx-note,.ingestion-error{font-size:11.5px;line-height:1.5}
+
+/* Multimodal AI — these components are created dynamically and have inline
+   font sizes, so !important is intentional here to establish the product scale. */
+#ai-intake-lab .ai09-head p{font-size:12.5px!important;line-height:1.6!important}
+#ai-intake-lab .ai09-badge{font-size:10.5px!important}
+#ai-intake-lab .ai09-drop strong{font-size:15px!important}
+#ai-intake-lab .ai09-drop small{font-size:12px!important;line-height:1.5!important}
+#ai-intake-lab .ai09-status{font-size:12px!important;line-height:1.5!important}
+#ai-intake-lab .ai09-card span{font-size:10.5px!important}
+#ai-intake-lab .ai09-card b{font-size:14px!important}
+#ai-intake-lab .ai09-note{font-size:11px!important;line-height:1.45!important}
+#ai-intake-lab .ai09-summary{font-size:12px!important;line-height:1.6!important}
+#ai-intake-lab .ai09-section-title{font-size:12.5px!important}
+#ai-intake-lab .ai09-table th{font-size:10px!important}
+#ai-intake-lab .ai09-table td{font-size:12px!important;line-height:1.45!important}
+#ai-intake-lab .ai09-item{padding:10px!important}
+#ai-intake-lab .ai09-item small{font-size:11px!important;line-height:1.45!important}
+#ai-intake-lab .ai09-save p{font-size:11.5px!important;line-height:1.55!important}
+#ai-intake-lab .ai09-question,#ai-intake-lab .ai09-warning{font-size:11.5px!important;line-height:1.5!important}
+#ai-intake-lab .ai092-section-note{font-size:10.5px!important}
+#ai-intake-lab .ai092-table{font-size:11px!important}
+#ai-intake-lab .ai092-kind{font-size:9.5px!important}
+#ai-intake-lab .ps094-policy-badge{font-size:9px!important;padding:3px 6px!important}
+
+/* Source Vault / source-first intake */
+#source-vault-panel .sv-badge{font-size:10.5px!important}
+#source-vault-panel .sv-card span{font-size:10.5px!important}
+#source-vault-panel .sv-card b{font-size:21px!important}
+#source-vault-panel .sv-note{font-size:11.5px!important;line-height:1.5!important}
+#source-vault-panel .sv-principle{font-size:11.5px!important;line-height:1.55!important;padding:10px 12px!important}
+#source-vault-panel .sv-upload label{font-size:10.5px!important}
+#source-vault-panel .sv-upload input,#source-vault-panel .sv-upload select{font-size:12.5px!important;padding:9px!important}
+#source-vault-panel .sv-upload button{font-size:13px!important;min-height:40px!important}
+#source-vault-panel .sv-status{font-size:11.5px!important;line-height:1.5!important}
+#source-vault-panel .sv-table{font-size:11.5px!important}
+#source-vault-panel .sv-table th{font-size:10.5px!important}
+#source-vault-panel .sv-table td{line-height:1.45!important}
+#source-vault-panel .sv-sourceid{font-size:10.5px!important}
+#source-vault-panel .sv-open{font-size:10.5px!important}
+
+/* Avoid low-contrast secondary text that looks disabled when it is merely
+   informational. Actual disabled/supporting states keep their explicit opacity. */
+.page-head p,.section-head p,.subtle,.sv-note,.ai09-note,
+.criteria-table small,.detected-table small,.quality-item small,
+.evidence-suggestion small{color:#667679}
+
+@media(max-width:900px){
+  body{font-size:15px}
+  .workspace-shell,.company-head{padding-left:18px;padding-right:18px}
+  .panel{padding:17px}
+  .page-head h1,.company-head h1{font-size:30px}
+}

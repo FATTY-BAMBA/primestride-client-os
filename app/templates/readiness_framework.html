@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}Readiness Framework · {{ company.name }} · PrimeStride Client OS{% endblock %}
+{% block content %}
+<style>
+  .range-score-box{min-width:180px;text-align:right}
+  .range-score-box strong{display:block;font-size:28px;line-height:1.05;color:#153b3d}
+  .range-score-box span{display:block;margin-top:4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#778587}
+  .range-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0 16px}
+  .range-meta>div{border:1px solid #e2e8e6;border-radius:9px;padding:10px 12px;background:#fbfcfb}
+  .range-meta b{display:block;font-size:13px;color:#173f40}.range-meta span{display:block;font-size:11px;color:#7b888a;margin-top:3px}
+  .gap-intelligence{margin-top:18px}.gap-intelligence-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}
+  .gap-panel{border:1px solid #dde5e2;border-radius:11px;padding:15px;background:#fff}
+  .gap-panel h3{margin:0 0 10px;font-size:15px}.gap-panel p{margin:3px 0;color:#576668;font-size:12px;line-height:1.45}
+  .gap-item{padding:10px 0;border-top:1px solid #eef1ef}.gap-item:first-of-type{border-top:0;padding-top:0}
+  .gap-item b{display:block;font-size:13px}.gap-item small{display:block;color:#7a8789;margin-top:3px;line-height:1.4}
+  .known-module{padding:9px 0;border-top:1px solid #eef1ef}.known-module:first-of-type{border-top:0;padding-top:0}
+  .known-module>div{display:flex;justify-content:space-between;gap:10px;margin-bottom:5px}.known-module span{font-size:11px;color:#6d7b7c}
+  .chip-line{display:flex;gap:6px;flex-wrap:wrap}.chip-line em{font-style:normal;font-size:10px;background:#edf5f1;color:#2e5f59;padding:4px 7px;border-radius:999px}
+  .do-not-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px}.do-not-list div{font-size:12px;color:#4f6061;padding:6px 0;border-bottom:1px solid #f0f2f1}
+  .principle-note{margin-top:8px;font-size:12px;color:#667477}
+  .readiness-empty-state{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:20px 22px;margin-bottom:16px;border:1px solid #cfe0da;border-radius:12px;background:linear-gradient(180deg,#f7fbf9,#f1f7f4)}
+  .readiness-empty-state h2{margin:4px 0 6px;font-size:20px;color:#173b3e}.readiness-empty-state p{margin:0;max-width:760px;font-size:13px;line-height:1.55;color:#526568}.readiness-empty-state small{display:block;margin-top:5px;color:#758285;font-size:11.5px}
+  .readiness-empty-criteria{margin-top:13px;border-top:1px solid #e7ecea;padding-top:11px}.readiness-empty-criteria>summary{cursor:pointer;list-style:none;font-size:12px;font-weight:750;color:#35665f;display:flex;align-items:center;gap:7px}.readiness-empty-criteria>summary::-webkit-details-marker{display:none}.readiness-empty-criteria>summary:before{content:'+';width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#edf4f1;color:#35665f}.readiness-empty-criteria[open]>summary:before{content:'−'}
+  .readiness-empty-criteria .criteria-table-wrap{margin-top:10px}.readiness-empty-criteria .criteria-table td:last-child,.readiness-empty-criteria .criteria-table th:last-child{display:none}
+  .readiness-logic-collapsed>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px}.readiness-logic-collapsed>summary::-webkit-details-marker{display:none}.readiness-logic-collapsed>summary b{font-size:15px}.readiness-logic-collapsed>summary:after{content:'Show';font-size:11px;color:#35665f;font-weight:750}.readiness-logic-collapsed[open]>summary:after{content:'Hide'}.readiness-logic-collapsed .logic-grid{margin-top:16px}.readiness-wait-next{display:flex;align-items:center;justify-content:space-between;gap:20px}.readiness-wait-next h2{margin:4px 0 5px;font-size:18px}.readiness-wait-next p{margin:0;color:#637275;font-size:12.5px;line-height:1.5;max-width:760px}
+  @media(max-width:900px){.gap-intelligence-grid,.range-meta,.do-not-list{grid-template-columns:1fr}.range-score-box{text-align:left;margin-top:10px}.readiness-empty-state,.readiness-wait-next{display:block}.readiness-empty-state .btn,.readiness-wait-next .btn{margin-top:14px}}
+</style>
+<section class="company-head v05-head">
+  <a class="back" href="/companies/{{ company.id }}">← Client Workspace · 客戶工作台</a>
+  <div class="eyebrow">READINESS FRAMEWORK · 資料準備度{% if readiness_version %} · v{{ readiness_version }}{% endif %}</div>
+  <h1>{{ company.name }}</h1>
+  <div class="head-tags">
+    <span class="stage-pill">{{ company.stage }}</span>
+    <span>{{ files_received }} files registered</span>
+    <span>Evidence-based only</span>
+  </div>
+</section>
+
+<div class="v05-page">
+  <section class="readiness-principle">
+    <div>
+      <span class="eyebrow">PRINCIPLE</span>
+      <h2>No invented readiness scores.</h2>
+      <p>Incomplete review shows an <b>evidence coverage</b> percentage and an honest <b>readiness range</b>. Unknown evidence stays unknown; it is never silently treated as ready.</p>
+      <small>證據尚未完整時，顯示「證據覆蓋率」與「準備度範圍」，未知不等於缺少，也不會被當成已準備完成。</small>
+    </div>
+    <a class="btn secondary" href="/companies/{{ company.id }}/data-intake">Open Data Intake · 資料匯入</a>
+  </section>
+
+  {% if files_received == 0 %}
+  <section class="readiness-empty-state">
+    <div>
+      <span class="eyebrow">WAITING FOR FIRST REAL CLIENT EVIDENCE</span>
+      <h2>There is nothing to assess yet — and that is the correct state.</h2>
+      <p>TEST and ARCHIVED sources are intentionally excluded. Once the first ACTIVE client file arrives, Client OS will retain the original, inspect what is actually present, and only then calculate evidence coverage and the next smallest gap.</p>
+      <small>目前沒有真實有效的客戶證據。先等第一批實際資料，再根據內容判斷，不提前製造資料清單。</small>
+    </div>
+    <a class="btn primary" href="/companies/{{ company.id }}/data-intake">Open Data Intake →</a>
+  </section>
+  {% endif %}
+
+  <div class="readiness-module-stack">
+    {% for summary in summaries %}
+    <section class="panel readiness-module-card">
+      <div class="readiness-module-head">
+        <div>
+          <span class="eyebrow">MODULE {{ '%02d'|format(summary.module_no) }}</span>
+          <h2>{{ summary.name }}</h2>
+          <small>{{ summary.name_zh }}</small>
+        </div>
+        <div class="range-score-box">
+          {% if summary.final %}
+            <strong>{{ summary.range_min|round|int }}%</strong><span>FINAL READINESS</span>
+          {% elif summary.coverage > 0 %}
+            <strong>{{ summary.range_min|round|int }}–{{ summary.range_max|round|int }}%</strong><span>READINESS RANGE</span>
+          {% else %}
+            <strong>—</strong><span>AWAITING EVIDENCE</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="range-meta">
+        <div><b>{{ summary.coverage|round|int }}%</b><span>Evidence coverage · 證據覆蓋率</span></div>
+        <div><b>{{ summary.confirmed_weight|round|int }} weighted pts</b><span>Confirmed earned evidence</span></div>
+        <div><b>{{ summary.unknown_weight|round|int }} weighted pts</b><span>Still unknown · 尚待確認</span></div>
+      </div>
+
+      <div class="evidence-progress">
+        <div><span>Evidence reviewed</span><b>{{ summary.coverage|round|int }}%</b></div>
+        <div class="bar"><i style="width:{{ summary.coverage }}%"></i></div>
+        <small>{% if summary.final %}All required criteria reviewed · range collapsed to a final score{% elif summary.coverage > 0 %}Range = confirmed minimum to best-case if all unknown evidence is later available{% else %}No criterion has been reviewed yet · 尚未開始證據檢視{% endif %}</small>
+      </div>
+
+      {% if files_received == 0 %}
+      <details class="readiness-empty-criteria">
+        <summary>View readiness criteria · {{ summary.criteria|length }} checks</summary>
+        <div class="criteria-table-wrap">
+          <table class="criteria-table">
+            <thead><tr><th>CRITERION<br>條件</th><th>WEIGHT</th><th>STATUS</th><th>EVIDENCE / NOTES</th><th></th></tr></thead>
+            <tbody>
+            {% for criterion in summary.criteria %}
+              <tr class="criterion-row status-{{ criterion.status }}">
+                <td><b>{{ criterion.label }}</b><small>{{ criterion.zh }}</small></td>
+                <td>{{ criterion.weight }}%</td>
+                <td><span class="evidence-status status-{{ criterion.status }}">{{ criterion.status_label }}</span></td>
+                <td><span class="muted">Waiting for active evidence</span></td>
+                <td></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+      {% else %}
+      <div class="criteria-table-wrap">
+        <table class="criteria-table">
+          <thead><tr><th>CRITERION<br>條件</th><th>WEIGHT</th><th>STATUS</th><th>EVIDENCE / NOTES</th><th></th></tr></thead>
+          <tbody>
+          {% for criterion in summary.criteria %}
+            <tr class="criterion-row status-{{ criterion.status }}">
+              <td><b>{{ criterion.label }}</b><small>{{ criterion.zh }}</small></td>
+              <td>{{ criterion.weight }}%</td>
+              <td><span class="evidence-status status-{{ criterion.status }}">{{ criterion.status_label }}</span></td>
+              <td>{% if criterion.source %}<b>{{ criterion.source }}</b>{% endif %}{% if criterion.notes %}<small>{{ criterion.notes }}</small>{% endif %}{% if not criterion.source and not criterion.notes %}<span class="muted">No evidence recorded</span>{% endif %}</td>
+              <td>
+                <details class="criterion-edit">
+                  <summary>Review</summary>
+                  <form method="post" action="/companies/{{ company.id }}/readiness-evidence">
+                    <input type="hidden" name="module_no" value="{{ summary.module_no }}">
+                    <input type="hidden" name="criterion_key" value="{{ criterion.key }}">
+                    <label>STATUS<select name="status">
+                      {% for value,label in status_options %}<option value="{{ value }}" {% if value==criterion.status %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select></label>
+                    <label>SOURCE<input name="source" value="{{ criterion.source or '' }}" placeholder="Filename / meeting / report"></label>
+                    <label>NOTES<textarea name="notes" placeholder="Why this status?">{{ criterion.notes or '' }}</textarea></label>
+                    <button>Save evidence</button>
+                  </form>
+                </details>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+
+  {% if gap_intelligence %}
+  <section class="panel gap-intelligence">
+    <div class="panel-title"><div><span class="eyebrow">NEXT GAP INTELLIGENCE · 下一缺口智慧</span><h2>Ask less. Ask exactly what moves the project forward.</h2></div></div>
+    <div class="gap-intelligence-grid">
+      <div class="gap-panel">
+        <h3>ASK NEXT · 下一步只問這些</h3>
+        {% if gap_intelligence.ask_next %}
+          {% for gap in gap_intelligence.ask_next %}
+          <div class="gap-item">
+            <b>{{ loop.index }}. {{ gap.title }} <span style="color:#829091;font-weight:500">· Module {{ '%02d'|format(gap.module_no) }}</span></b>
+            <small>{{ gap.reason }}</small>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p>No unresolved evidence gaps remain in the selected module rubrics.</p>
+        {% endif %}
+      </div>
+
+      <div class="gap-panel">
+        <h3>WHAT WE KNOW · 已確認</h3>
+        {% for module in gap_intelligence.known_by_module %}
+        <div class="known-module">
+          <div><b>Module {{ '%02d'|format(module.module_no) }} · {{ module.name }}</b><span>{{ module.coverage|round|int }}% evidence covered</span></div>
+          <div class="chip-line">
+            {% for item in module.available %}<em>✓ {{ item.label }}</em>{% endfor %}
+            {% if module.awaiting_count %}<em style="background:#f5f2ea;color:#7b6a42">? {{ module.awaiting_count }} unresolved</em>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="gap-panel" style="margin-top:14px">
+      <h3>DO NOT ASK FOR AGAIN · 不要再跟客戶要</h3>
+      <p class="principle-note">These items already have reviewed evidence. More samples may be useful later, but they are not the next data request by default.</p>
+      <div class="do-not-list">
+        {% for item in gap_intelligence.do_not_ask %}
+          <div>✓ {{ item.label }}{% if item.source %} <span style="color:#9aa4a5">· {{ item.source }}</span>{% endif %}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if files_received == 0 %}
+  <details class="panel readiness-logic-card readiness-logic-collapsed">
+    <summary><div><span class="eyebrow">SCORING LOGIC</span><b>How readiness will be calculated once evidence arrives</b></div></summary>
+    <div class="logic-grid">
+      <div><b>Available</b><span>100% of criterion weight</span></div>
+      <div><b>Partial</b><span>50% of criterion weight</span></div>
+      <div><b>Missing</b><span>0% of criterion weight</span></div>
+      <div><b>Not required</b><span>Excluded from denominator</span></div>
+      <div><b>Awaiting</b><span>0% in minimum; full weight in maximum</span></div>
+    </div>
+    <p><b>Minimum readiness</b> = confirmed earned weight ÷ all required weight. <b>Maximum readiness</b> assumes every still-unknown criterion later proves available. Once all required criteria are reviewed, the range collapses to one final score.</p>
+  </details>
+  {% else %}
+  <section class="panel readiness-logic-card">
+    <div class="panel-title"><div><span class="eyebrow">SCORING LOGIC</span><h2>How the range is calculated · 準備度範圍怎麼算</h2></div></div>
+    <div class="logic-grid">
+      <div><b>Available</b><span>100% of criterion weight</span></div>
+      <div><b>Partial</b><span>50% of criterion weight</span></div>
+      <div><b>Missing</b><span>0% of criterion weight</span></div>
+      <div><b>Not required</b><span>Excluded from denominator</span></div>
+      <div><b>Awaiting</b><span>0% in minimum; full weight in maximum</span></div>
+    </div>
+    <p><b>Minimum readiness</b> = confirmed earned weight ÷ all required weight. <b>Maximum readiness</b> assumes every still-unknown criterion later proves available. Once all required criteria are reviewed, the range collapses to one final score.</p>
+  </section>
+  {% endif %}
+
+  {% if files_received == 0 %}
+  <section class="panel readiness-wait-next">
+    <div>
+      <span class="eyebrow">NEXT</span>
+      <h2>Wait for the first real client evidence · 等待第一批真實資料</h2>
+      <p>No blueprint work is needed yet. The next valid action is to receive an ACTIVE source, inspect it, and let the evidence determine what comes after that.</p>
+    </div>
+    <a class="btn primary" href="/companies/{{ company.id }}/data-intake">Open Data Intake →</a>
+  </section>
+  {% else %}
+  <section class="panel">
+    <div class="panel-title"><div><span class="eyebrow">NEXT</span><h2>Turn evidence into a blueprint · 下一步</h2></div></div>
+    <div class="v05-link-grid">
+      <a href="/companies/{{ company.id }}/stage-intelligence"><b>Stage Intelligence</b><small>See what must happen next</small></a>
+      <a href="/companies/{{ company.id }}/solution-blueprint"><b>Solution Blueprint</b><small>Use confirmed evidence, keep unknowns as TBD</small></a>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

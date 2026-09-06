@@ -1,77 +1,103 @@
-# PrimeStride Client OS v0.1
+# PrimeStride Client OS v1.6
 
-A working internal MVP for PrimeStride's Client Intelligence / Sales Operating System.
+Internal implementation and client-intelligence operating system for PrimeStride AI.
 
-## What is in v0.1
+## What the platform does
 
-- Pipeline board with persistent company records
-- Company stage, owner, next action, due date, fit status
-- Discovery record: current flow, bottleneck, key-person dependency, existing systems, baseline, success definition, customer exact words
-- Ranked pain points
-- Module-fit record
-- Data-readiness scores by module
-- Tasks with owner/due date/completion
-- Timeline of stage/readiness/discovery events
-- Demo client preloaded for ④ AI 報價 + ⑤ 工單 + ⑥ AI 數據分析
-- SQLite by default for zero-friction local use
-- PostgreSQL-ready through `DATABASE_URL`
-- Docker Compose with PostgreSQL for a more production-like setup
+Client OS turns messy client evidence into a governed implementation workflow:
 
-## Run immediately
+`Provision Client → Source-First Intake → private original → SourceReference → IngestionJob → deterministic/AI proposal → human review → lifecycle-safe readiness → client blueprint`
+
+Core rules:
+- every Company receives a durable tenant identity
+- retain the original before interpretation
+- ACTIVE / TEST / ARCHIVED evidence is explicit
+- TEST and ARCHIVED sources never affect readiness or stage gates
+- AI proposes; humans approve client truth
+- readiness is deterministic and evidence-based
+- retries create new processing attempts against the same immutable source
+
+## Architecture
+
+Stable backend domains:
+- `app/accounts/`
+- `app/lineage/`
+- `app/jobs/`
+- `app/readiness/`
+- `app/lifecycle/`
+- `app/intake/`
+- `app/storage/`
+- `app/workspace/`
+- `app/ai/`
+
+Stable Data Intake frontend entrypoint:
+- `app/static/frontend/bootstrap.js`
+
+Legacy release-numbered modules remain only as compatibility leaves while they are retired safely.
+
+## Multi-client provisioning
+
+v1.6 introduces `tenant_configs` as the durable client provisioning record. A new Company receives a stable tenant key such as:
+
+`c0002-acme-manufacturing`
+
+That key is independent from the mutable company display name and is used as the Source Vault namespace:
+
+`tenants/<tenant_key>/originals/YYYY/MM/...`
+
+Existing SourceReference tenant keys are adopted rather than rewritten, so retained object paths remain immutable.
+
+Provisioning status is available at:
+
+`GET /companies/{company_id}/provisioning/status`
+
+## Database migrations
+
+Alembic is authoritative from v1.5 onward. Runtime `create_all()` is no longer the normal provisioning path.
+
+```bash
+alembic upgrade head
+```
+
+Migrations are adoption-safe for existing Client OS databases. v1.6 adds durable tenant provisioning without moving or renaming retained Source Vault objects.
+
+`RUNTIME_SCHEMA_BOOTSTRAP=1` exists only as an explicit escape hatch for disposable local experiments.
+
+## Run locally
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate     # Windows: .venv\\Scripts\\activate
-pip install -r requirements.txt
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Open: http://127.0.0.1:8000
+Open http://127.0.0.1:8000
 
-A demo company is automatically created the first time the app runs.
-
-## Run with Docker + PostgreSQL
+## Tests
 
 ```bash
-docker compose up --build
+pytest -q
 ```
 
-Open: http://127.0.0.1:8000
+GitHub Actions runs:
+- Python compilation
+- a fresh-database Alembic migration smoke test
+- the regression suite
 
-## Deployment direction
+Regression coverage includes schema ownership, platform wiring, tenant-key immutability, historical namespace adoption, lifecycle TEST isolation, deterministic readiness ranges, gap intelligence, and immutable SourceReference identity/object provenance.
 
-- GitHub is the source of truth.
-- Vercel should deploy from this repository.
-- Production data should use PostgreSQL, not SQLite.
-- Never commit API keys, database credentials, client uploads, or confidential customer data.
+## Deployment
 
-## Next build increments
+GitHub is the source of truth. Production must use PostgreSQL through `DATABASE_URL`; SQLite is local/demo only.
 
-### v0.2 — Meeting workflow
-- Pre-meeting intake
-- Meeting/discovery run sheet
-- Meeting records
-- AI-assisted meeting summary (human confirm/edit)
-- Definition-of-Done gates before stage movement
+Before a fresh environment serves traffic, run:
 
-### v0.3 — Data request + files
-- Personalized data request generated from module fit
-- Secure file upload
-- File inventory per client
-- Data-request status
+```bash
+alembic upgrade head
+```
 
-### v0.4 — Data Readiness Engine
-- File classification
-- Field detection/mapping
-- Completeness/consistency/depth scoring
-- What to ask for next / what NOT to ask for
+## Safety / data hygiene
 
-### v0.5 — Client Blueprint
-- Current-state workflow
-- Proposed future workflow
-- Recommended phases
-- Auto-drafted follow-up / blueprint presentation
-
-## Architecture direction
-
-v0.1 is a modular monolith. Do not split into microservices yet. Preserve domain boundaries so Client Intelligence, Data Intake, Quoting, Production, Analytics and AI can be extracted later if needed.
+Never commit API keys, database credentials, real client uploads, or confidential customer data.
