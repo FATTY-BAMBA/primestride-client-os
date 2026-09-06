@@ -47,7 +47,6 @@ def provider_name() -> str:
 
 
 def s3_client():
-    # Keep boto3 lazy so ordinary Client OS requests do not pay its import cost.
     import boto3
 
     kwargs: dict[str, Any] = {
@@ -100,20 +99,29 @@ def _legacy_tenant_key(company: Company) -> str:
 
 
 def tenant_key(company: Company, db=None) -> str:
-    """Return the immutable tenant namespace for a company.
-
-    When a DB session is supplied, ``tenant_configs`` is authoritative. The
-    fallback preserves existing behavior during migration adoption and for old
-    compatibility imports that call this helper without a session.
-    """
-    if db is not None:
+    """Return the immutable tenant namespace for a company."""
+    owns_session = False
+    session = db
+    if session is None:
+        try:
+            from ..db import SessionLocal
+            session = SessionLocal()
+            owns_session = True
+        except Exception:
+            session = None
+    if session is not None:
         try:
             from ..accounts.service import tenant_key_for_company
-            return tenant_key_for_company(db, company)
+            value = tenant_key_for_company(session, company)
+            if owns_session:
+                session.commit()
+            return value
         except Exception:
-            # Storage should remain readable during migration rollout; legacy
-            # namespace derivation is safer than failing an existing retained file.
-            pass
+            if owns_session:
+                session.rollback()
+        finally:
+            if owns_session:
+                session.close()
     return _legacy_tenant_key(company)
 
 
@@ -163,7 +171,6 @@ def public_manifest(row: IntakeFile, manifest: dict[str, Any]) -> dict[str, Any]
     return result
 
 
-# Compatibility aliases while release-numbered modules are retired.
 _configured = configured
 _provider_name = provider_name
 _s3_client = s3_client
