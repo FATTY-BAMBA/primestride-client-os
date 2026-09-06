@@ -21,6 +21,10 @@ DEFAULT_LOCALE = "zh-Hant"
 DEFAULT_TIMEZONE = "Asia/Taipei"
 DEFAULT_LIFECYCLE = "active"
 DEFAULT_ONBOARDING_STATUS = "provisioned"
+# Compatibility seed only: preserves the already-published first-client namespace
+# on fresh installs before any SourceReference exists. Future tenants do not use
+# a broad name heuristic.
+COMPATIBILITY_NAME_ALIASES = {"菘佑有限公司": "songyou"}
 
 
 def now_utc() -> datetime:
@@ -72,7 +76,8 @@ def derive_tenant_identity(db, company: Company, requested_slug: str | None = No
     requested = ascii_slug(requested_slug or "")
     historical_key = _existing_source_tenant_key(db, company.id)
     historical_slug = _slug_from_tenant_key(company.id, historical_key)
-    slug = requested or historical_slug or ascii_slug(company.name) or "client"
+    compatibility_slug = COMPATIBILITY_NAME_ALIASES.get(company.name)
+    slug = requested or historical_slug or compatibility_slug or ascii_slug(company.name) or "client"
     tenant_key = historical_key if historical_slug and not requested else f"c{company.id:04d}-{slug}"
     return {"slug": slug, "tenant_key": tenant_key}
 
@@ -187,6 +192,7 @@ __all__ = [
     "DEFAULT_LOCALE",
     "DEFAULT_TIMEZONE",
     "DEFAULT_LIFECYCLE",
+    "COMPATIBILITY_NAME_ALIASES",
     "ascii_slug",
     "derive_tenant_identity",
     "tenant_config_table_available",
