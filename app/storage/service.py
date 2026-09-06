@@ -1,12 +1,9 @@
 """Stable private object-storage services for retained client originals.
 
-This domain consolidates the former v1.0 / v1.0.1 Source Vault helpers while
-preserving the validated storage contract:
-- private S3-compatible object storage
-- tenant-readable object keys
-- SHA-256 and immutable source identity
-- legacy note manifest for backward compatibility
-- first-class SourceReference as the authoritative relational provenance record
+Source Vault keeps immutable originals in private S3-compatible storage. As of
+v1.6, new object paths use the durable tenant identity from ``app.accounts``;
+legacy environment/name-derived keys remain only as a compatibility fallback for
+databases that have not yet adopted the tenant provisioning migration.
 """
 from __future__ import annotations
 
@@ -18,7 +15,7 @@ from typing import Any
 
 from ..models import Company, IntakeFile
 
-DOMAIN_VERSION = "1.3.2"
+DOMAIN_VERSION = "1.6.0"
 MANIFEST_PREFIX = "PS_SOURCE_VAULT_V1:"
 MAX_SOURCE_BYTES = int(os.getenv("SOURCE_VAULT_MAX_BYTES", str(25 * 1024 * 1024)))
 
@@ -30,6 +27,7 @@ SECRET_KEY = os.getenv("SOURCE_VAULT_SECRET_ACCESS_KEY", "").strip()
 SSE = os.getenv("SOURCE_VAULT_SSE", "").strip()
 
 ALLOWED_CATEGORIES = {"customers", "products", "quotes", "work_orders", "reports", "other"}
+# Historical fallback only. Persisted tenant_configs are authoritative in v1.6+.
 DEFAULT_NAME_ALIASES = {"菘佑有限公司": "songyou"}
 
 
@@ -89,7 +87,7 @@ def slug_overrides() -> dict[str, str]:
         return {}
 
 
-def tenant_key(company: Company) -> str:
+def _legacy_tenant_key(company: Company) -> str:
     overrides = slug_overrides()
     slug = overrides.get(str(company.id))
     if not slug:
@@ -99,6 +97,24 @@ def tenant_key(company: Company) -> str:
     if not slug:
         slug = "client"
     return f"c{company.id:04d}-{slug}"
+
+
+def tenant_key(company: Company, db=None) -> str:
+    """Return the immutable tenant namespace for a company.
+
+    When a DB session is supplied, ``tenant_configs`` is authoritative. The
+    fallback preserves existing behavior during migration adoption and for old
+    compatibility imports that call this helper without a session.
+    """
+    if db is not None:
+        try:
+            from ..accounts.service import tenant_key_for_company
+            return tenant_key_for_company(db, company)
+        except Exception:
+            # Storage should remain readable during migration rollout; legacy
+            # namespace derivation is safer than failing an existing retained file.
+            pass
+    return _legacy_tenant_key(company)
 
 
 def manifest_from_notes(notes: str | None) -> dict[str, Any] | None:
