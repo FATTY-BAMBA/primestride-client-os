@@ -1,8 +1,7 @@
 """Stable source-lifecycle services.
 
 Owns ACTIVE / TEST / ARCHIVED source state, lifecycle-safe evidence projection,
-and the intake-stage reconciliation gate. This is the domain replacement for the
-former v1.1.1 lifecycle implementation.
+and the intake-stage reconciliation gate.
 """
 from __future__ import annotations
 
@@ -10,15 +9,15 @@ import threading
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import insert, select
+from sqlalchemy import insert, inspect, select
 
-from ..db import engine
+from ..db import RUNTIME_SCHEMA_BOOTSTRAP, engine
 from ..lineage.schema import source_references
 from ..lineage.service import ensure_lineage_schema
 from ..models import Company, IntakeFile, ReadinessEvidence
 from .schema import intake_source_lifecycle, lifecycle_metadata
 
-DOMAIN_VERSION = "1.3.1"
+DOMAIN_VERSION = "1.5.0"
 VALID_STATES = {"active", "test", "archived"}
 
 _schema_lock = threading.Lock()
@@ -45,7 +44,14 @@ def ensure_lifecycle_schema() -> None:
     with _schema_lock:
         if _schema_ready:
             return
-        lifecycle_metadata.create_all(bind=engine, checkfirst=True)
+        if RUNTIME_SCHEMA_BOOTSTRAP:
+            lifecycle_metadata.create_all(bind=engine, checkfirst=True)
+        else:
+            if not inspect(engine).has_table("intake_source_lifecycle"):
+                raise RuntimeError(
+                    "Lifecycle schema is not migrated. Missing: intake_source_lifecycle. "
+                    "Run `alembic upgrade head`."
+                )
         _schema_ready = True
 
 
