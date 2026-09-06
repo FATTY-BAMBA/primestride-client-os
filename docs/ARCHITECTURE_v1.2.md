@@ -43,6 +43,20 @@ Former `v111_lifecycle.py`, `v101_runtime.py`, and `v110_review.py` modules are 
 
 The jobs and readiness domains now import lifecycle behavior from `app.lifecycle`, eliminating another release-numbered dependency edge.
 
+### v1.3.2 — private storage / Source Vault
+
+Production wiring now uses `app/storage/` for the complete retained-original contract:
+
+- private S3-compatible storage configuration and provider client
+- tenant-readable keys such as `tenants/c0001-songyou/originals/YYYY/MM/...`
+- SHA-256, immutable source IDs, and compatibility manifests
+- Source-First storage status
+- Source Vault inventory and 5-minute private open links
+- first-class `SourceReference` creation on retention
+- lifecycle-aware stage reconciliation after a new retained source is registered
+
+Former `v100_storage.py` and `v101_storage.py` are now compatibility adapters only. The jobs domain reads retained originals through `app.storage` directly, so retry/recovery no longer depends on a release-numbered storage module.
+
 ## Required invariants
 
 1. Source-First Intake retains the original before interpretation.
@@ -55,10 +69,6 @@ The jobs and readiness domains now import lifecycle behavior from `app.lifecycle
 8. Existing v1.1 URLs and behavior remain backward compatible during consolidation.
 
 ## Remaining cleanup
-
-### Storage domain
-
-Move private object storage, Source Vault retention, presigned-open behavior, and tenant key handling behind `storage/`. Retire `v100_storage.py` / `v101_storage.py` only after Source-First parity passes.
 
 ### Deterministic intake domain
 
