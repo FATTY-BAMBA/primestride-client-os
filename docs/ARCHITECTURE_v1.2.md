@@ -55,7 +55,22 @@ Production wiring now uses `app/storage/` for the complete retained-original con
 - first-class `SourceReference` creation on retention
 - lifecycle-aware stage reconciliation after a new retained source is registered
 
-Former `v100_storage.py` and `v101_storage.py` are now compatibility adapters only. The jobs domain reads retained originals through `app.storage` directly, so retry/recovery no longer depends on a release-numbered storage module.
+Former `v100_storage.py` and `v101_storage.py` are compatibility adapters only. The jobs domain reads retained originals through `app.storage` directly.
+
+### v1.3.3 — deterministic intake and readiness scoring
+
+Production no longer installs `v082_runtime.py` or `v082_perf.py`.
+
+Stable ownership is now:
+
+- `app/intake/deterministic.py` — intake categories, deterministic hash/file matching, evidence invalidation, and memory projection helpers
+- `app/intake/router.py` — register/refresh, reclassify, confirm review, and remove workflow actions with lifecycle-aware stage reconciliation
+- `app/readiness/scoring.py` — evidence coverage, honest readiness range, and next-gap intelligence
+- `app/workspace/router.py` — lifecycle-safe Stage Intelligence and Solution Blueprint read paths
+
+The historical `v082_runtime.py` and `v082_perf.py` files are thin compatibility adapters only. Browser-side table detection and canonical mapping remain on the validated v0.8.4 engine for now; this release changes ownership and wiring, not extraction behavior.
+
+The platform timing middleware also moved into `platform_bootstrap.py`, so `Server-Timing` remains available while `X-PrimeStride-Version` now reports the actual platform release rather than `0.8.2`.
 
 ## Required invariants
 
@@ -69,10 +84,6 @@ Former `v100_storage.py` and `v101_storage.py` are now compatibility adapters on
 8. Existing v1.1 URLs and behavior remain backward compatible during consolidation.
 
 ## Remaining cleanup
-
-### Deterministic intake domain
-
-Move table-region detection, canonical mapping, correction lifecycle helpers, and readiness-range helpers out of `v082_runtime.py` / `v082_perf.py` into stable intake/readiness services.
 
 ### AI domain
 
