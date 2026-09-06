@@ -1,15 +1,15 @@
 """Stable intake orchestration helpers.
 
-Keeps source manifests intact when inspections are refreshed and identifies which
-processing engine produced a saved review payload. Deterministic table parsing
-still lives in the v0.8 compatibility layer until that domain is migrated.
+Keeps Source Vault manifests intact when inspections are refreshed and identifies
+which processing engine produced a saved review payload. Server-side deterministic
+matching/correction helpers now live in ``app.intake.deterministic``.
 """
 from __future__ import annotations
 
 import re
 
 MANIFEST_PREFIX = "PS_SOURCE_VAULT_V1:"
-DOMAIN_VERSION = "1.3.1"
+DOMAIN_VERSION = "1.3.3"
 
 
 def merge_notes_preserving_source(old_notes: str | None, new_notes: str | None) -> str | None:
