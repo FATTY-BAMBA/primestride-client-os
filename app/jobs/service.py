@@ -8,26 +8,30 @@ from urllib.request import Request as UrlRequest
 
 from sqlalchemy import func, insert, select, update
 
+from ..ai.schema import OUTPUT_SCHEMA_092
+from ..ai.service import (
+    MAX_AI_FILE_BYTES,
+    OPENAI_API_KEY,
+    OPENAI_MODEL,
+    OPENAI_RESPONSES_URL,
+    RESPONSE_ID_RE,
+    SUPPORTED_FILE_TYPES,
+    SUPPORTED_IMAGE_TYPES,
+    extract_output_text,
+    provider_json,
+    section_prompt,
+    validate_section_result,
+)
 from ..lifecycle.schema import intake_source_lifecycle
 from ..lifecycle.service import ensure_lifecycle_rows
 from ..lineage.schema import ingestion_jobs, source_references
 from ..lineage.service import ensure_lineage_schema, update_ingestion_job
 from ..storage.service import BUCKET, s3_client
-from ..v09_ai import (
-    MAX_AI_FILE_BYTES,
-    OPENAI_API_KEY,
-    OPENAI_MODEL,
-    OPENAI_RESPONSES_URL,
-    SUPPORTED_FILE_TYPES,
-    SUPPORTED_IMAGE_TYPES,
-    _extract_output_text,
-)
-from ..v092_ai import OUTPUT_SCHEMA_092, _prompt_092, _validated_result_092
-from ..v093_ai import _RESPONSE_ID_RE, _provider_json
 
-DOMAIN_VERSION = "1.3.2"
+DOMAIN_VERSION = "1.3.4"
 RETRYABLE_STATUSES = {"failed", "cancelled", "incomplete"}
 RECOVERABLE_STATUSES = {"queued", "processing"}
+_RESPONSE_ID_RE = RESPONSE_ID_RE
 
 
 def now_utc() -> datetime:
@@ -102,7 +106,7 @@ def start_provider_retry(raw: bytes, mime: str, filename: str) -> dict:
         "input": [{
             "role": "user",
             "content": [
-                {"type": "input_text", "text": _prompt_092("")},
+                {"type": "input_text", "text": section_prompt("")},
                 file_block,
             ],
         }],
@@ -122,7 +126,7 @@ def start_provider_retry(raw: bytes, mime: str, filename: str) -> dict:
         headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
         method="POST",
     )
-    return _provider_json(req, timeout=25)
+    return provider_json(req, timeout=25)
 
 
 def insert_retry_job(db, old_job, response_id: str, provider_status: str) -> dict:
@@ -169,13 +173,13 @@ def recover_provider_state(db, provider_id: str) -> tuple[str, dict | None]:
         headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
         method="GET",
     )
-    data = _provider_json(req, timeout=20)
+    data = provider_json(req, timeout=20)
     status = str(data.get("status") or "processing")
     result = None
     if status == "completed":
         try:
-            parsed = json.loads(_extract_output_text(data))
-            result = _validated_result_092(parsed)
+            parsed = json.loads(extract_output_text(data))
+            result = validate_section_result(parsed)
             update_ingestion_job(db, provider_job_id=provider_id, status="completed", result_summary=str(result.get("summary") or "")[:4000])
         except Exception as exc:
             status = "failed"
