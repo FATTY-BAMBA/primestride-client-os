@@ -1,7 +1,7 @@
 import os
 from threading import Lock
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.pool import NullPool
 
@@ -29,10 +29,6 @@ if is_sqlite:
         poolclass=NullPool,
     )
 elif IS_VERCEL:
-    # Vercel + transaction-pooler path. NullPool avoids stale serverless
-    # connections. We intentionally do not enable pool_pre_ping here because
-    # NullPool opens a new connection per checkout and pre_ping would add an
-    # extra network round trip to every request.
     engine_kwargs.update(
         poolclass=NullPool,
         connect_args={"prepare_threshold": None},
@@ -54,11 +50,11 @@ class Base(DeclarativeBase):
 _schema_lock = Lock()
 _schema_ready = False
 
-# Runtime create_all was useful while the prototype was changing daily, but on
-# serverless Postgres it creates avoidable cold-start database work. Existing
-# Preview/Production databases are now treated as provisioned. Set
-# RUNTIME_SCHEMA_BOOTSTRAP=1 only when intentionally bootstrapping a fresh DB.
+# Alembic is authoritative from v1.5 onward. This escape hatch is intentionally
+# explicit for disposable local experiments only; normal environments should run
+# `alembic upgrade head` before the application starts.
 RUNTIME_SCHEMA_BOOTSTRAP = os.getenv("RUNTIME_SCHEMA_BOOTSTRAP", "").strip().lower() in {"1", "true", "yes", "on"}
+CORE_SCHEMA_SENTINELS = {"companies", "intake_files", "readiness_evidence"}
 
 
 def ensure_schema() -> None:
@@ -68,8 +64,18 @@ def ensure_schema() -> None:
     with _schema_lock:
         if _schema_ready:
             return
-        if is_sqlite or not IS_VERCEL or RUNTIME_SCHEMA_BOOTSTRAP:
+
+        if RUNTIME_SCHEMA_BOOTSTRAP:
             Base.metadata.create_all(bind=engine)
+        else:
+            inspector = inspect(engine)
+            missing = sorted(name for name in CORE_SCHEMA_SENTINELS if not inspector.has_table(name))
+            if missing:
+                raise RuntimeError(
+                    "Database schema is not migrated. Missing: "
+                    + ", ".join(missing)
+                    + ". Run `alembic upgrade head` before starting Client OS."
+                )
         _schema_ready = True
 
 
