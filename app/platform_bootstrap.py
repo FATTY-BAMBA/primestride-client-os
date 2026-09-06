@@ -2,10 +2,10 @@
 
 Central runtime registry for the previously version-stacked implementation.
 
-v1.3.4 completes the backend domain migration: production routing for lineage,
-jobs, readiness, lifecycle, intake, storage, workspace, deterministic intake, and
-multimodal AI now depends on stable domain packages. Release-numbered modules are
-compatibility adapters only.
+v1.4.0 keeps the fully consolidated backend domains from v1.3.4 and adds a
+stable domain-oriented browser bootstrap for Data Intake. Release-numbered
+frontend modules remain behavior-compatibility leaves behind that stable browser
+boundary while their wiring is no longer exposed to templates or app bootstrap.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from typing import Callable
 
 from fastapi import FastAPI, Request
 
-PLATFORM_VERSION = "1.3.4"
+PLATFORM_VERSION = "1.4.0"
 
 # Order is behavioral: several newer routes intentionally shadow prototype
 # routes, and Starlette resolves the first matching route.
@@ -80,5 +80,7 @@ def install_platform_extensions(app: FastAPI) -> None:
             ],
             "deterministic_runtime": "app.intake.deterministic",
             "multimodal_runtime": "app.ai",
+            "frontend_runtime": "/static/frontend/bootstrap.js",
+            "frontend_domains": ["deterministic", "ai", "source", "workspace"],
             "compatibility_bridge": "none",
         }
